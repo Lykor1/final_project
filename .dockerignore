@@ -1,0 +1,17 @@
+__pycache__/
+.env
+.env_example
+.venv/
+media/
+staticfiles/
+.idea/
+.dockerignore
+Dockerfile
+docker-compose*.yml
+.git
+.gitignore
+.DS_Store
+Thumbs.db
+*/migrations/__pycache__/
+migrations/
+.pytest_cache/
