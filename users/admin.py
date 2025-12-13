@@ -16,13 +16,15 @@ class UserAdmin(UserAdmin):
         'role',
         'team'
     )
+    ordering = ('email',)
     search_fields = ('email',)
+    readonly_fields = ('created_at', 'last_login')
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        ('Personal info', {'fields': ('first_name', 'last_name', 'birthday')}),
-        ('Work info', {'fields': ('role', 'team')}),
-        ('Permission', {'fields': ('is_active', 'is_superuser', 'groups', 'user_permissions')}),
-        ('Important dates', {'fields': ('created_at', 'last_login')}),
+        ('Персональная информация', {'fields': ('first_name', 'last_name', 'birthday')}),
+        ('Рабочая информация', {'fields': ('role', 'team')}),
+        ('Права', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Важные даты', {'fields': ('created_at', 'last_login')}),
     )
     add_fieldsets = (
         (None, {
@@ -31,7 +33,8 @@ class UserAdmin(UserAdmin):
                 'email',
                 'password1',
                 'password2',
-                'first_name', 'last_name',
+                'first_name',
+                'last_name',
                 'is_active'
             )
         }),
