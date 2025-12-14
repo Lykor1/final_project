@@ -1,5 +1,8 @@
+from datetime import date
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from functools import partial
 
 from teams.models import Team
 
@@ -34,6 +37,33 @@ class UserManager(BaseUserManager):
         return self._create_user(email, first_name, last_name, password, **extra_fields)
 
 
+def _get_age(birthday_date):
+    if birthday_date is None:
+        return None
+    today = date.today()
+    age = today.year - birthday_date.year
+    if (today.month, today.day) < (birthday_date.month, birthday_date.day):
+        age -= 1
+    return age
+
+
+def validate_not_future_date(value):
+    if value > date.today():
+        raise ValidationError(
+            '%(value)s не может быть в будущем',
+            params={'value': value}
+        )
+
+
+def validate_minimum_age(value, min_age=18):
+    age = _get_age(value)
+    if age and age < min_age:
+        raise ValidationError(
+            f'Минимальный возраст: {min_age} лет. Вам: {age}',
+            params={'value': value, 'age': age}
+        )
+
+
 class UserWithEmail(AbstractBaseUser, PermissionsMixin):
     class Role(models.TextChoices):
         USER = 'user', 'пользователь'
@@ -44,7 +74,9 @@ class UserWithEmail(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=255, verbose_name="Имя")
     last_name = models.CharField(max_length=255, verbose_name='Фамилия')
     role = models.CharField(max_length=7, choices=Role.choices, default=Role.USER, verbose_name='Роль')
-    birthday = models.DateField(blank=True, null=True, verbose_name='Дата рождения')
+    birthday = models.DateField(blank=True, null=True,
+                                validators=(validate_not_future_date, validate_minimum_age),
+                                verbose_name='Дата рождения')
     team = models.ForeignKey(Team, on_delete=models.SET_NULL, blank=True, null=True, related_name='members',
                              verbose_name='Команда')
     is_active = models.BooleanField(default=True, verbose_name='Активность')
@@ -64,3 +96,7 @@ class UserWithEmail(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f'{self.email} ({self.last_name} {self.first_name})'
+
+    @property
+    def get_age(self):
+        return _get_age(self.birthday)
