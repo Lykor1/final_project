@@ -2,6 +2,7 @@ import pytest
 from datetime import date
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 
 User = get_user_model()
 
@@ -38,6 +39,13 @@ class TestUserModel:
         data[field] = None
         with pytest.raises(ValueError):
             create_user(**data)
+
+    def test_unique_email(self, user, create_user, user_data):
+        """
+        Тест на уникальность email
+        """
+        with pytest.raises(IntegrityError):
+            create_user(**user_data)
 
     def test_create_superuser_success(self, admin_user):
         """
