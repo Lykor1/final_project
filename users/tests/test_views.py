@@ -1,6 +1,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
@@ -85,3 +86,166 @@ class TestUserRegisterView:
         response2 = client.post(self.url, data=user_data)
         assert response2.status_code == 400
         assert 'email' in response2.data
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestTokenObtainPairView:
+    @pytest.fixture(autouse=True)
+    def setup(self, user_data, create_user, client):
+        user_data.pop('password2')
+        self.user = create_user(**user_data)
+        user_data.pop('birthday')
+        user_data.pop('first_name')
+        user_data.pop('last_name')
+        self.data = user_data
+        self.url = reverse('users:login')
+        self.client = client
+
+    def test_login_success(self):
+        """
+        Тест на успешный логин
+        """
+        response = self.client.post(self.url, data=self.data)
+        assert response.status_code == 200
+        assert 'access' in response.data
+        assert 'refresh' in response.data
+        assert not 'password' in response.data
+
+    @pytest.mark.parametrize(
+        'fields',
+        [
+            'email',
+            'password'
+        ]
+    )
+    def test_login_without_required_fields(self, fields):
+        """
+        Тест на логин без обязательных полей
+        """
+        self.data.pop(fields)
+        response = self.client.post(self.url, data=self.data)
+        assert response.status_code == 400
+        assert fields in response.data
+
+    @pytest.mark.parametrize(
+        'email, password',
+        [
+            ('test@example.com', '123'),
+            ('test', 'testpassword123'),
+        ]
+    )
+    def test_login_invalid_data(self, email, password):
+        """
+        Тест на логин с невалидными данными
+        """
+        self.data.update({'email': email, 'password': password})
+        response = self.client.post(self.url, data=self.data)
+        assert response.status_code == 401
+        assert 'не найдено активной учетной записи' in str(response.data).lower()
+
+    @pytest.mark.parametrize(
+        'email, password',
+        [
+            ('test@example.com', ''),
+            ('', 'testpassword123'),
+        ]
+    )
+    def test_login_with_empty_email_or_password(self, email, password):
+        """
+        Тест на логин c пустыми email/password
+        """
+        self.data.update({'email': email, 'password': password})
+        response = self.client.post(self.url, data=self.data)
+        assert response.status_code == 400
+        assert 'email' in response.data or 'password' in response.data
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestTokenRefreshView:
+    @pytest.fixture(autouse=True)
+    def setup(self, client, create_user, user_data):
+        user_data.pop('password2')
+        self.data = user_data
+        self.user = create_user(**user_data)
+        self.url = reverse('users:refresh')
+        self.client = client
+        self.refresh_token = str(RefreshToken.for_user(self.user))
+
+    def test_refresh_success(self):
+        """
+        Тест на успешное обновление refresh-токена
+        """
+        response = self.client.post(self.url, data={'refresh': self.refresh_token})
+        assert response.status_code == 200
+        assert 'access' in response.data
+        assert 'refresh' in response.data
+
+    def test_refresh_invalid_token(self):
+        """
+        Тест на обновление с невалидным токеном
+        """
+        response = self.client.post(self.url, data={'refresh': 'invalidToken'})
+        assert response.status_code == 401
+        assert 'detail' in response.data
+
+    def test_refresh_missing_token(self):
+        """
+        Тест на обновление без токена
+        """
+        response = self.client.post(self.url, data={})
+        assert response.status_code == 400
+        assert 'refresh' in response.data
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestUserLogoutView:
+    """
+    - успешный выход
+    - выход с невалидным токеном
+    - выход неавторизованного пользователя
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self, client, create_user, user_data):
+        user_data.pop('password2')
+        self.user = create_user(**user_data)
+        refresh = RefreshToken.for_user(self.user)
+        self.refresh_token = str(refresh)
+        self.client = client
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(refresh.access_token)}')
+        self.url = reverse('users:logout')
+
+    def test_logout_success(self):
+        """
+        Тест на успешный выход
+        """
+        response = self.client.post(self.url, data={'refresh': self.refresh_token})
+        print(response.data)
+        assert response.status_code == 204
+
+    def test_logout_invalid_token(self):
+        """
+        Тест на выход с неверным refresh-токеном
+        """
+        response = self.client.post(self.url, data={'refresh': 'invalidToken'})
+        assert response.status_code == 400
+        assert 'detail' in response.data
+
+    def test_logout_missing_token(self):
+        """
+        Тест на выход без токена
+        """
+        response = self.client.post(self.url, data={})
+        assert response.status_code == 400
+        assert 'detail' in response.data
+
+    def test_logout_unauthenticated(self):
+        """
+        Тест на выход неавторизованного пользователя
+        """
+        self.client.credentials()
+        response = self.client.post(self.url, data={'refresh': self.refresh_token})
+        assert response.status_code == 401

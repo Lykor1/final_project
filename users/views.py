@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from .serializers import UserRegisterSerializer
 
@@ -27,11 +27,16 @@ class UserLogoutView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request):
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return Response(
+                {'detail': 'Refresh-токен отсутствует'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         try:
-            refresh_token = request.data.get('refresh_token')
             token = RefreshToken(refresh_token)
             token.blacklist()
-        except Exception:
+        except TokenError:
             return Response(
                 {'detail': 'Неверный refresh токен'},
                 status=status.HTTP_400_BAD_REQUEST
