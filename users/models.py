@@ -2,7 +2,6 @@ from datetime import date
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
-from functools import partial
 
 from teams.models import Team
 

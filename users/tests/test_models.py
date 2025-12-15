@@ -10,6 +10,11 @@ User = get_user_model()
 @pytest.mark.models
 @pytest.mark.django_db
 class TestUserModel:
+    @pytest.fixture(autouse=True)
+    def setup(self, user_data):
+        user_data.pop('password2')
+        return user_data
+
     def test_create_user_success(self, create_user, user_data):
         """
         Тест на успешное создание записи

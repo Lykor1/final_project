@@ -44,6 +44,7 @@ def user_data(adult_birthday):
         'first_name': 'test',
         'last_name': 'test',
         'password': 'testpassword123',
+        'password2': 'testpassword123',
         'birthday': adult_birthday
     }
 
