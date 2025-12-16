@@ -44,7 +44,6 @@ class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'id',
             'email',
             'full_name',
             'birthday',
@@ -67,3 +66,18 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return f'{obj.first_name} {obj.last_name}'.strip()
+
+
+class UserListSerializer(UserDetailSerializer):
+    class Meta(UserDetailSerializer.Meta):
+        fields = (
+            'id',
+            'email',
+            'full_name',
+            'birthday',
+            'age',
+            'role',
+            'team_name',
+            'created_at'
+        )
+        read_only_fields = fields

@@ -1,7 +1,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 
-from users.serializers import UserRegisterSerializer, UserDetailSerializer
+from users.serializers import UserRegisterSerializer, UserDetailSerializer, UserListSerializer
 
 User = get_user_model()
 
@@ -85,10 +85,6 @@ class TestUserRegisterSerializer:
 @pytest.mark.serializers
 @pytest.mark.django_db
 class TestUserDetailSerializer:
-    """
-    - проверка full name
-    """
-
     @pytest.fixture(autouse=True)
     def setup(self, user_data, team, create_user):
         user_data.pop('password2')
@@ -100,9 +96,8 @@ class TestUserDetailSerializer:
         Тест на верное отображение данных
         """
         serializer = UserDetailSerializer(instance=self.user)
-        expected_fields = {'id', 'email', 'full_name', 'birthday', 'age', 'role', 'team_name', 'created_at'}
+        expected_fields = {'email', 'full_name', 'birthday', 'age', 'role', 'team_name', 'created_at'}
         assert set(serializer.data.keys()) == expected_fields
-        assert serializer.data['id'] == self.user.id
         assert serializer.data['email'] == self.user.email
         assert serializer.data['birthday'] == str(self.user.birthday)
 
@@ -152,4 +147,73 @@ class TestUserDetailSerializer:
         self.user.first_name = f_name
         self.user.last_name = l_name
         serializer = UserDetailSerializer(instance=self.user)
+        assert serializer.data['full_name'] == expected
+
+
+@pytest.mark.serializers
+@pytest.mark.django_db
+class TestUserListSerializer:
+    @pytest.fixture(autouse=True)
+    def setup(self, user_data, team, create_user):
+        user_data.pop('password2')
+        user_data['team'] = team
+        self.user = create_user(**user_data)
+
+    def test_read_valid_data(self):
+        """
+        Тест на верное отображение данных
+        """
+        serializer = UserListSerializer(instance=self.user)
+        expected_fields = {'id', 'email', 'full_name', 'birthday', 'age', 'role', 'team_name', 'created_at'}
+        assert set(serializer.data.keys()) == expected_fields
+        assert serializer.data['id'] == self.user.id
+        assert serializer.data['email'] == self.user.email
+        assert serializer.data['birthday'] == str(self.user.birthday)
+
+    @pytest.mark.parametrize(
+        'birthday, expected',
+        [
+            (True, 25),
+            (False, None),
+        ]
+    )
+    def test_get_age(self, birthday, expected):
+        """
+        Тест на get_age
+        """
+        if not birthday:
+            self.user.birthday = None
+        serializer = UserListSerializer(instance=self.user)
+        assert serializer.data['age'] == expected
+
+    @pytest.mark.parametrize(
+        'team_bool, expected',
+        [
+            (True, 'test team'),
+            (False, None),
+        ]
+    )
+    def test_get_team_name(self, team_bool, expected):
+        """
+        Тест на get_team_name
+        """
+        if not team_bool:
+            self.user.team = None
+        serializer = UserListSerializer(instance=self.user)
+        assert serializer.data['team_name'] == expected
+
+    @pytest.mark.parametrize(
+        'f_name, l_name, expected',
+        [
+            ('first', 'test', 'first test'),
+            (' Second', 'test ', 'Second test'),
+        ]
+    )
+    def test_get_full_name(self, f_name, l_name, expected):
+        """
+        Тест на get_full_name
+        """
+        self.user.first_name = f_name
+        self.user.last_name = l_name
+        serializer = UserListSerializer(instance=self.user)
         assert serializer.data['full_name'] == expected
