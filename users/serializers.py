@@ -32,3 +32,38 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         validated_data.pop('password2')
         user = User.objects.create_user(**validated_data)
         return user
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    # TODO: Добавить список задач
+    # TODO: Добавить среднюю оценку за задачи
+    team_name = serializers.SerializerMethodField()
+    age = serializers.SerializerMethodField()
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'email',
+            'full_name',
+            'birthday',
+            'age',
+            'role',
+            'team_name',
+            'created_at'
+        )
+        read_only_fields = fields
+
+    def get_team_name(self, obj):
+        if not obj.team:
+            return None
+        return obj.team.name
+
+    def get_age(self, obj):
+        if not obj.birthday:
+            return None
+        return obj.get_age
+
+    def get_full_name(self, obj):
+        return f'{obj.first_name} {obj.last_name}'.strip()
