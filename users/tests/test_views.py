@@ -202,11 +202,6 @@ class TestTokenRefreshView:
 @pytest.mark.views
 @pytest.mark.django_db
 class TestUserLogoutView:
-    """
-    - успешный выход
-    - выход с невалидным токеном
-    - выход неавторизованного пользователя
-    """
 
     @pytest.fixture(autouse=True)
     def setup(self, client, create_user, user_data):
@@ -249,3 +244,110 @@ class TestUserLogoutView:
         self.client.credentials()
         response = self.client.post(self.url, data={'refresh': self.refresh_token})
         assert response.status_code == 401
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestUserDetailView:
+    @pytest.fixture(autouse=True)
+    def setup(self, client, create_user, user_data, team):
+        self.url = reverse('users:detail')
+        user_data.pop('password2')
+        user_data['team'] = team
+        self.user = create_user(**user_data)
+        self.client = client
+
+    def test_read_detail_success(self):
+        """
+        Тест на успешный просмотр информации о пользователе
+        """
+        self.client.force_authenticate(self.user)
+        response = self.client.get(self.url)
+        assert response.status_code == 200
+        expected_fields = {'email', 'full_name', 'birthday', 'age', 'role', 'team_name', 'created_at'}
+        assert set(response.data.keys()) == expected_fields
+        assert response.data['email'] == self.user.email
+        assert response.data['full_name'] == f'{self.user.first_name} {self.user.last_name}'
+        assert 'password' not in response.data
+
+    def test_read_detail_unauthenticated(self):
+        """
+        Тест на просмотр анонимного пользователя
+        """
+        response = self.client.get(self.url)
+        assert response.status_code == 401
+        assert 'учетные данные не были предоставлены' in str(response.data).lower()
+
+    def test_read_detail_with_current_user(self, create_user):
+        """
+        Тест на просмотр именно текущего пользователя
+        """
+        data = {
+            'email': 'other@example.com',
+            'password': self.user.password,
+            'first_name': self.user.first_name,
+            'last_name': self.user.last_name
+        }
+        other_user = create_user(**data)
+        self.client.force_authenticate(self.user)
+        response = self.client.get(self.url)
+        assert response.status_code == 200
+        assert not response.data['email'] == 'other@example.com'
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestUserListView:
+    """
+    - анонимный пользователь
+    - не админ
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self, client, create_user, user_data, team, admin_user):
+        self.url = reverse('users:list')
+        self.admin = admin_user
+        self.users = []
+        for i in range(5):
+            email = f"{user_data['email'].split('@')[0]}{i}@example.com"
+            first_name = f"{user_data['first_name']}{i}"
+            last_name = f"{user_data['last_name']}{i}"
+            self.users.append(
+                create_user(
+                    email=email,
+                    first_name=first_name,
+                    last_name=last_name,
+                    birthday=user_data['birthday'],
+                    team=team,
+                )
+            )
+        self.client = client
+
+    def test_read_list_success(self):
+        """
+        Тест на успешный просмотр списка пользователей
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.get(self.url)
+        assert response.status_code == 200
+        assert User.objects.count() == 6
+        expected_fields = {'id', 'email', 'full_name', 'birthday', 'age', 'role', 'team_name', 'created_at'}
+        assert set(response.data[0].keys()) == expected_fields
+        assert response.data[1]['id'] == self.users[0].id
+        assert response.data[2]['email'] == self.users[1].email
+        assert response.data[3]['full_name'] == f'{self.users[2].first_name} {self.users[2].last_name}'
+        assert 'password' not in response.data[1]
+
+    def test_read_list_unauthenticated(self):
+        """
+        Тест на просмотр списка пользователей анонимным пользователем
+        """
+        response = self.client.get(self.url)
+        assert response.status_code == 401
+        assert 'учетные данные не были предоставлены' in str(response.data).lower()
+
+    def test_read_list_not_admin(self):
+        self.client.force_authenticate(self.users[0])
+        response = self.client.get(self.url)
+        assert response.status_code == 403
+        assert 'недостаточно прав' in str(response.data)

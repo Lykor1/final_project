@@ -6,7 +6,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
-from .serializers import UserRegisterSerializer, UserDetailSerializer
+from .serializers import UserRegisterSerializer, UserDetailSerializer, UserListSerializer
 
 User = get_user_model()
 
@@ -50,6 +50,8 @@ class UserDetailView(RetrieveAPIView):
     """
     permission_classes = (IsAuthenticated,)
     serializer_class = UserDetailSerializer
+    queryset = User.objects.select_related('team').only('email', 'first_name', 'last_name', 'birthday', 'role',
+                                                        'team', 'created_at')
 
     def get_object(self):
         return self.request.user
@@ -59,6 +61,7 @@ class UserListView(ListAPIView):
     """
     Просмотр информации о пользователях. Строго для администратора
     """
-    permission_classes = (IsAuthenticated, IsAdminUser)
-    serializer_class = UserDetailSerializer
-    queryset = User.objects.all()
+    permission_classes = (IsAdminUser,)
+    serializer_class = UserListSerializer
+    queryset = User.objects.select_related('team').only('id', 'email', 'first_name', 'last_name', 'birthday', 'role',
+                                                        'team', 'created_at')
