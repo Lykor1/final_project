@@ -81,3 +81,19 @@ class UserListSerializer(UserDetailSerializer):
             'created_at'
         )
         read_only_fields = fields
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'birthday')
+        extra_kwargs = {
+            'first_name': {
+                'required': True,
+                'min_length': 2,
+            },
+            'last_name': {
+                'required': True,
+                'min_length': 2,
+            },
+        }

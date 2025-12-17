@@ -1,7 +1,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 
-from users.serializers import UserRegisterSerializer, UserDetailSerializer, UserListSerializer
+from users.serializers import UserRegisterSerializer, UserDetailSerializer, UserListSerializer, UserUpdateSerializer
 
 User = get_user_model()
 
@@ -217,3 +217,87 @@ class TestUserListSerializer:
         self.user.last_name = l_name
         serializer = UserListSerializer(instance=self.user)
         assert serializer.data['full_name'] == expected
+
+
+@pytest.mark.serializers
+@pytest.mark.django_db
+class TestUserUpdateSerializer:
+    @pytest.fixture(autouse=True)
+    def setup(self, create_user, user_data):
+        user_data.pop('password2')
+        self.user = create_user(**user_data)
+        self.new_data = {
+            'first_name': 'New',
+            'last_name': 'test_data',
+            'birthday': '2000-01-01',
+        }
+
+    def test_update_valid_data(self):
+        """
+        Тест на успешное обновление данных
+        """
+        serializer = UserUpdateSerializer(instance=self.user, data=self.new_data)
+        assert serializer.is_valid(), serializer.errors
+        new_user = serializer.save()
+        new_user.refresh_from_db()
+        assert new_user.first_name == self.new_data['first_name']
+        assert new_user.last_name == self.new_data['last_name']
+
+    @pytest.mark.parametrize(
+        'fields',
+        [
+            'first_name',
+            'last_name',
+        ]
+    )
+    def test_update_without_required_fields(self, fields):
+        """
+        Тест на обновление без обязательных полей
+        """
+        self.new_data.pop(fields)
+        serializer = UserUpdateSerializer(instance=self.user, data=self.new_data)
+        assert not serializer.is_valid()
+        assert fields in serializer.errors
+
+    def test_update_without_optional_fields(self, user_data):
+        """
+        Тест на обновление без опциональных полей
+        """
+        self.new_data.pop('birthday')
+        serializer = UserUpdateSerializer(instance=self.user, data=self.new_data)
+        assert serializer.is_valid()
+        new_user = serializer.save()
+        new_user.refresh_from_db()
+        assert new_user.birthday == user_data['birthday']
+
+    @pytest.mark.parametrize(
+        'first_name, last_name, error',
+        [
+            ('', 'test_data', 'first_name'),
+            ('new', '', 'last_name'),
+            ('', '', 'first_name')
+        ]
+    )
+    def test_update_with_empty_fields(self, first_name, last_name, error):
+        """
+        Тест на пустые first_name и last_name
+        """
+        self.new_data.update({'first_name': first_name, 'last_name': last_name})
+        serializer = UserUpdateSerializer(instance=self.user, data=self.new_data)
+        assert not serializer.is_valid()
+        assert error in serializer.errors
+
+    def test_update_patch(self, user_data):
+        """
+        Тест на частичное обновление данных
+        """
+        serializer = UserUpdateSerializer(
+            instance=self.user,
+            data={'first_name': self.new_data['first_name']},
+            partial=True
+        )
+        assert serializer.is_valid()
+        new_user = serializer.save()
+        new_user.refresh_from_db()
+        assert new_user.first_name == self.new_data['first_name']
+        assert new_user.last_name == user_data['last_name']
