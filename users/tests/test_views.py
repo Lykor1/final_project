@@ -351,3 +351,83 @@ class TestUserListView:
         response = self.client.get(self.url)
         assert response.status_code == 403
         assert 'недостаточно прав' in str(response.data)
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestUserUpdateView:
+    """
+    - полное/частичное обновление
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self, client, create_user, user_data):
+        self.url = reverse('users:update')
+        user_data.pop('password2')
+        self.user = create_user(**user_data)
+        self.client = client
+        self.new_data = {
+            'first_name': 'new',
+            'last_name': 'test_data',
+            'birthday': '1999-01-01'
+        }
+
+    def test_update_success(self, user_data):
+        """
+        Тест на успешное обновление
+        """
+        self.client.force_authenticate(self.user)
+        response = self.client.put(self.url, self.new_data)
+        assert response.status_code == 200
+        self.user.refresh_from_db()
+        assert self.user.first_name == self.new_data['first_name']
+        assert self.user.last_name == self.new_data['last_name']
+        assert self.user.email == user_data['email']
+
+    @pytest.mark.parametrize(
+        'first_name, last_name, error',
+        [
+            ('new', '', 'last_name'),
+            ('', 'test_data', 'first_name'),
+            ('', '', 'first_name'),
+        ]
+    )
+    def test_update_with_invalid_data(self, first_name, last_name, error):
+        """
+        Тест на обновление с невалидными данными
+        """
+        self.client.force_authenticate(self.user)
+        self.new_data.update(first_name=first_name, last_name=last_name)
+        response = self.client.put(self.url, self.new_data)
+        assert response.status_code == 400
+        assert error in str(response.data)
+
+    def test_update_unauthenticated(self):
+        """
+        Тест на обновление анонимным пользователем
+        """
+        response = self.client.put(self.url, self.new_data)
+        assert response.status_code == 401
+        assert 'учетные данные не были предоставлены' in str(response.data).lower()
+
+    @pytest.mark.parametrize(
+        'partial',
+        [
+            False,
+            True
+        ]
+    )
+    def test_update_partial(self, partial):
+        """
+        Тест на частичное/полное обновление
+        """
+        self.client.force_authenticate(self.user)
+        if partial:
+            self.new_data.pop('first_name')
+            response = self.client.patch(self.url, self.new_data)
+        else:
+            response = self.client.put(self.url, self.new_data)
+        assert response.status_code == 200
+        self.user.refresh_from_db()
+        assert self.user.last_name == self.new_data['last_name']
+        assert str(self.user.birthday) == self.new_data['birthday']
