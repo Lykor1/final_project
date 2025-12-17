@@ -17,4 +17,4 @@ def blacklist_tokens(user):
         outstanding_tokens = OutstandingToken.objects.filter(user=user)
         blacklisted_tokens = [BlacklistedToken(token=token) for token in outstanding_tokens]
         if blacklisted_tokens:
-            BlacklistedToken.objects.bulk_create(blacklisted_tokens)
+            BlacklistedToken.objects.bulk_create(blacklisted_tokens, ignore_conflicts=True)
