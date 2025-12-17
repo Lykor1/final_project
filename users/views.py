@@ -1,4 +1,9 @@
-from rest_framework.generics import CreateAPIView, RetrieveAPIView, ListAPIView
+from rest_framework.generics import (
+    CreateAPIView,
+    RetrieveAPIView,
+    ListAPIView,
+    UpdateAPIView
+)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -6,7 +11,12 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
-from .serializers import UserRegisterSerializer, UserDetailSerializer, UserListSerializer
+from .serializers import (
+    UserRegisterSerializer,
+    UserDetailSerializer,
+    UserListSerializer,
+    UserUpdateSerializer
+)
 
 User = get_user_model()
 
@@ -65,3 +75,15 @@ class UserListView(ListAPIView):
     serializer_class = UserListSerializer
     queryset = User.objects.select_related('team').only('id', 'email', 'first_name', 'last_name', 'birthday', 'role',
                                                         'team', 'created_at')
+
+
+class UserUpdateView(UpdateAPIView):
+    """
+    Обновление информации пользователя
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserUpdateSerializer
+    queryset = User.objects.only('first_name', 'last_name', 'birthday')
+
+    def get_object(self):
+        return self.request.user
