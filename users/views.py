@@ -21,7 +21,7 @@ from .serializers import (
     UserListSerializer,
     UserUpdateSerializer
 )
-from .services import blacklist_token
+from .services import blacklist_tokens, blacklisted_refresh_token
 
 User = get_user_model()
 
@@ -49,8 +49,7 @@ class UserLogoutView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         try:
-            token = RefreshToken(refresh_token)
-            token.blacklist()
+            blacklisted_refresh_token(refresh_token)
         except TokenError:
             return Response(
                 {'detail': 'Неверный refresh токен'},
@@ -95,11 +94,14 @@ class UserUpdateView(UpdateAPIView):
 
 
 class UserDeleteView(APIView):
+    """
+    Удаление пользователя
+    """
     permission_classes = (IsAdminUser,)
 
     def delete(self, request, email, *args, **kwargs):
         user = get_object_or_404(User, email=email)
-        blacklist_token(user)
+        blacklist_tokens(user)
         str_user = f'Пользователь {user} успешно удалён'
         user.delete()
         return Response(
