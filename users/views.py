@@ -13,8 +13,6 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import (
     RefreshToken,
     TokenError,
-    OutstandingToken,
-    BlacklistedToken
 )
 
 from .serializers import (
@@ -23,6 +21,7 @@ from .serializers import (
     UserListSerializer,
     UserUpdateSerializer
 )
+from .services import blacklist_token
 
 User = get_user_model()
 
@@ -100,10 +99,10 @@ class UserDeleteView(APIView):
 
     def delete(self, request, email, *args, **kwargs):
         user = get_object_or_404(User, email=email)
-        for token in OutstandingToken.objects.filter(user=user):
-            BlacklistedToken.objects.get_or_create(token=token)
+        blacklist_token(user)
+        str_user = f'Пользователь {user} успешно удалён'
         user.delete()
         return Response(
-            {'detail': f'Пользователь {user} успешно удалён'},
-            status=status.HTTP_204_NO_CONTENT
+            {'detail': str_user},
+            status=status.HTTP_200_OK
         )

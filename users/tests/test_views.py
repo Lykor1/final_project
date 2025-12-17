@@ -1,7 +1,12 @@
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import (
+    RefreshToken,
+    OutstandingToken,
+    BlacklistedToken
+)
+from datetime import datetime
 
 User = get_user_model()
 
@@ -431,3 +436,55 @@ class TestUserUpdateView:
         self.user.refresh_from_db()
         assert self.user.last_name == self.new_data['last_name']
         assert str(self.user.birthday) == self.new_data['birthday']
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestUserDeleteView:
+    @pytest.fixture(autouse=True)
+    def setup(self, admin_user, client, create_user, user_data):
+        self.admin = admin_user
+        user_data.pop('password2')
+        self.user = create_user(**user_data)
+        self.client = client
+        self.url = 'users:delete'
+
+    def test_delete_user_success(self):
+        """
+        Тест на успешное удаление пользователя
+        """
+        self.client.force_authenticate(self.admin)
+        url = reverse(self.url, kwargs={'email': self.user.email})
+        response = self.client.delete(url)
+        assert response.status_code == 200
+        assert 'успешно удалён' in str(response.data)
+        assert not User.objects.filter(email=self.user.email).exists()
+
+    def test_delete_not_admin_user(self):
+        """
+        Тест на удаление пользователя обычным пользователем
+        """
+        self.client.force_authenticate(self.user)
+        url = reverse(self.url, kwargs={'email': self.admin.email})
+        response = self.client.delete(url)
+        assert response.status_code == 403
+        assert 'недостаточно прав' in str(response.data)
+
+    def test_delete_unauthenticated_user(self):
+        """
+        Тест на удаление пользователя анонимным пользователем
+        """
+        url = reverse(self.url, kwargs={'email': self.user.email})
+        response = self.client.delete(url)
+        assert response.status_code == 401
+        assert 'учетные данные не были предоставлены' in str(response.data).lower()
+
+    def test_delete_non_exists_user(self):
+        """
+        Тест на удаление несуществующего пользователя
+        """
+        self.client.force_authenticate(self.admin)
+        url = reverse(self.url, kwargs={'email': 'nonexists@example.com'})
+        response = self.client.delete(url)
+        assert response.status_code == 404
+        assert 'no userwithemail matches' in str(response.data).lower()
