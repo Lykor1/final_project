@@ -2,14 +2,20 @@ from rest_framework.generics import (
     CreateAPIView,
     RetrieveAPIView,
     ListAPIView,
-    UpdateAPIView
+    UpdateAPIView,
+    get_object_or_404
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.tokens import (
+    RefreshToken,
+    TokenError,
+    OutstandingToken,
+    BlacklistedToken
+)
 
 from .serializers import (
     UserRegisterSerializer,
@@ -87,3 +93,17 @@ class UserUpdateView(UpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class UserDeleteView(APIView):
+    permission_classes = (IsAdminUser,)
+
+    def delete(self, request, email, *args, **kwargs):
+        user = get_object_or_404(User, email=email)
+        for token in OutstandingToken.objects.filter(user=user):
+            BlacklistedToken.objects.get_or_create(token=token)
+        user.delete()
+        return Response(
+            {'detail': f'Пользователь {user} успешно удалён'},
+            status=status.HTTP_204_NO_CONTENT
+        )
