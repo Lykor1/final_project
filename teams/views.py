@@ -1,11 +1,23 @@
+from django.core.exceptions import ValidationError
+from rest_framework import status
 from rest_framework.generics import (
     CreateAPIView,
-    DestroyAPIView
+    DestroyAPIView,
+    get_object_or_404
 )
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
+from django.contrib.auth import get_user_model
 
 from .models import Team
-from .serializers import TeamCreateSerializer
+from .serializers import (
+    TeamCreateSerializer,
+    TeamAddUserSerializer
+)
+from .services import TeamService
+
+User = get_user_model()
 
 
 class TeamCreateAPIView(CreateAPIView):
@@ -28,3 +40,21 @@ class TeamDeleteAPIView(DestroyAPIView):
 
     def get_queryset(self):
         return Team.objects.filter(creator=self.request.user)
+
+
+class TeamAddUserAPIView(APIView):
+    permission_classes = (IsAdminUser,)
+
+    def post(self, request, team_name):
+        team = get_object_or_404(Team, name=team_name, creator=self.request.user)
+        serializer = TeamAddUserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = get_object_or_404(User, email=serializer.data['email'])
+        try:
+            TeamService.add_user_to_team(team, user)
+        except ValidationError as e:
+            return Response({'detail': e.message}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {'detail': 'Пользователь успешно добавлен в команду'},
+            status=status.HTTP_200_OK
+        )

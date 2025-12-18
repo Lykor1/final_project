@@ -6,4 +6,5 @@ app_name = 'teams'
 urlpatterns = [
     path('create/', views.TeamCreateAPIView.as_view(), name='create'),
     path('delete/<int:pk>', views.TeamDeleteAPIView.as_view(), name='delete'),
+    path('add-user/<str:name>/', views.TeamAddUserAPIView.as_view(), name='add-user'),
 ]
