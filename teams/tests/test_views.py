@@ -159,3 +159,70 @@ class TestTeamDeleteView:
         response = self.client.delete(self.url)
         assert response.status_code == 401
         assert Team.objects.count() == 1
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestTeamAddUserView:
+    @pytest.fixture(autouse=True)
+    def setup(self, client, admin_user, regular_user, team, create_user, user_data):
+        self.url = reverse('teams:add-user', kwargs={'team_id': team.id})
+        self.client = client
+        self.admin_user = admin_user
+        self.regular_user = regular_user
+        self.team = team
+        data = user_data.copy()
+        data.update({'email': 'another@example.com'})
+        self.another_user = create_user(**data)
+
+    def test_add_user_success(self):
+        """
+        Тест на успешное добавление пользователя в команду
+        """
+        self.client.force_authenticate(self.admin_user)
+        response = self.client.post(self.url, data={'user_email': self.regular_user.email})
+        assert response.status_code == 200
+        self.regular_user.refresh_from_db()
+        assert self.regular_user.team == self.team
+
+    def test_add_user_already_in_team(self):
+        """
+        Тест на добавление пользователя, состоящего в команде
+        """
+        self.regular_user.team = self.team
+        self.regular_user.save()
+        self.client.force_authenticate(self.admin_user)
+        response = self.client.post(self.url, data={'user_email': self.regular_user.email})
+        assert response.status_code == 400
+        assert 'уже состоит' in response.data['detail']
+
+    @pytest.mark.parametrize(
+        'data',
+        [
+            {},
+            {'user_email': ''},
+            {'user_email': 'not-a-email'}
+        ]
+    )
+    def test_add_user_invalid_email(self, data):
+        """
+        Тест на добавление пользователя с невалидным email
+        """
+        self.client.force_authenticate(self.admin_user)
+        response = self.client.post(self.url, data=data)
+        assert response.status_code == 400
+
+    def test_add_user_not_admin(self):
+        """
+        Тест на добавление пользователя обычным пользователем
+        """
+        self.client.force_authenticate(self.regular_user)
+        response = self.client.post(self.url, data={'user_email': self.another_user.email})
+        assert response.status_code == 403
+
+    def test_add_user_unauthenticated_user(self):
+        """
+        Тест на добавление пользователя анонимным пользователем
+        """
+        response = self.client.post(self.url, data={'user_email': self.regular_user.email})
+        assert response.status_code == 401

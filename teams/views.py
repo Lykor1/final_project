@@ -42,14 +42,14 @@ class TeamDeleteAPIView(DestroyAPIView):
         return Team.objects.filter(creator=self.request.user)
 
 
-class TeamAddUserAPIView(APIView):
+class TeamAddUserView(APIView):
     permission_classes = (IsAdminUser,)
 
-    def post(self, request, team_name):
-        team = get_object_or_404(Team, name=team_name, creator=self.request.user)
+    def post(self, request, team_id):
+        team = get_object_or_404(Team, id=team_id, creator=self.request.user)
         serializer = TeamAddUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = get_object_or_404(User, email=serializer.data['email'])
+        user = get_object_or_404(User, email=serializer.validated_data['user_email'])
         try:
             TeamService.add_user_to_team(team, user)
         except ValidationError as e:
