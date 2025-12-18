@@ -1,6 +1,9 @@
 import pytest
 
-from teams.serializers import TeamCreateSerializer
+from teams.serializers import (
+    TeamCreateSerializer,
+    TeamAddUserSerializer
+)
 
 
 @pytest.mark.serializers
@@ -72,3 +75,61 @@ class TestTeamCreateSerializer:
         serializer = TeamCreateSerializer(data=self.team_data)
         assert serializer.is_valid()
         assert serializer.validated_data['name'] == self.team_data['name']
+
+
+class TestTeamAddUserSerializer:
+    """
+    - email в разном регистре
+    """
+
+    def test_valid_email(self, user_data):
+        """
+        Тест на валидный email
+        """
+        serializer = TeamAddUserSerializer(data={'user_email': user_data['email']})
+        assert serializer.is_valid()
+        assert serializer.validated_data['user_email'] == user_data['email']
+
+    @pytest.mark.parametrize(
+        'email',
+        [
+            'invalid-email',
+            'test@',
+            '@example.com',
+            'test@.com',
+            'test@com',
+            ''
+        ]
+    )
+    def test_invalid_email(self, email):
+        """
+        Тест на невалидный email
+        """
+        serializer = TeamAddUserSerializer(data={'user_email': email})
+        assert not serializer.is_valid()
+        assert 'user_email' in serializer.errors
+
+    def test_missing_email(self):
+        """
+        Тест на отсутствие email
+        """
+        serializer = TeamAddUserSerializer(data={})
+        assert not serializer.is_valid()
+        assert 'user_email' in serializer.errors
+
+    @pytest.mark.parametrize(
+        'email, expected',
+        [
+            ('TEST@EXAMPLE.COM', 'test@example.com'),
+            ('  test@example.com', 'test@example.com'),
+            ('test@example.com  ', 'test@example.com'),
+            ('  test@example.com  ', 'test@example.com'),
+        ]
+    )
+    def test_email_valid_correctly(self, email, expected):
+        """
+        Тест на правильную валидацию
+        """
+        serializer = TeamAddUserSerializer(data={'user_email': email})
+        assert serializer.is_valid()
+        assert serializer.validated_data['user_email'] == expected

@@ -16,3 +16,10 @@ class TeamCreateSerializer(serializers.ModelSerializer):
         if len(value) < 3:
             raise serializers.ValidationError('Название должно содержать минимум 3 символа')
         return value
+
+
+class TeamAddUserSerializer(serializers.Serializer):
+    user_email = serializers.EmailField(help_text='Email пользователя', required=True)
+
+    def validate_user_email(self, value):
+        return value.lower().strip()
