@@ -43,6 +43,9 @@ class TeamDeleteAPIView(DestroyAPIView):
 
 
 class TeamAddUserView(APIView):
+    """
+    Добавление пользователя в команду
+    """
     permission_classes = (IsAdminUser,)
 
     def post(self, request, team_id):
@@ -56,5 +59,25 @@ class TeamAddUserView(APIView):
             return Response({'detail': e.message}, status=status.HTTP_400_BAD_REQUEST)
         return Response(
             {'detail': 'Пользователь успешно добавлен в команду'},
+            status=status.HTTP_200_OK
+        )
+
+
+class TeamRemoveUserView(APIView):
+    """
+    Удаление пользователя из команды
+    """
+    permission_classes = (IsAdminUser,)
+
+    def post(self, request):
+        serializer = TeamAddUserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = get_object_or_404(User, email=serializer.validated_data['user_email'])
+        try:
+            TeamService.remove_user_from_team(user)
+        except ValidationError as e:
+            return Response({'detail': e.message}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {'detail': 'Пользователь успешно удалён из команды'},
             status=status.HTTP_200_OK
         )

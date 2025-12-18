@@ -17,3 +17,13 @@ class TeamService:
             )
         user.team = team
         user.save(update_fields=['team'])
+
+    @staticmethod
+    @transaction.atomic
+    def remove_user_from_team(user: User) -> None:
+        if not user.team:
+            raise ValidationError(
+                'Пользователь не состоит в команде'
+            )
+        user.team = None
+        user.save(update_fields=['team'])

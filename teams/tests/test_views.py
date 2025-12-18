@@ -226,3 +226,68 @@ class TestTeamAddUserView:
         """
         response = self.client.post(self.url, data={'user_email': self.regular_user.email})
         assert response.status_code == 401
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestTeamRemoveUserView:
+    @pytest.fixture(autouse=True)
+    def setup(self, client, admin_user, regular_user, team, create_user, user_data):
+        self.url = reverse('teams:remove-user')
+        self.client = client
+        self.admin_user = admin_user
+        self.regular_user = regular_user
+        self.regular_user.team = team
+        self.regular_user.save()
+
+    def test_remove_user_success(self):
+        """
+        Тест на успешное удаление пользователя из команды
+        """
+        self.client.force_authenticate(self.admin_user)
+        response = self.client.post(self.url, data={'user_email': self.regular_user.email})
+        assert response.status_code == 200
+        self.regular_user.refresh_from_db()
+        assert self.regular_user.team is None
+
+    def test_remove_user_without_team(self):
+        """
+        Тест на удаление пользователя без команды
+        """
+        self.regular_user.team = None
+        self.regular_user.save()
+        self.client.force_authenticate(self.admin_user)
+        response = self.client.post(self.url, data={'user_email': self.regular_user.email})
+        assert response.status_code == 400
+        assert 'не состоит' in str(response.data)
+
+    @pytest.mark.parametrize(
+        'data',
+        [
+            {},
+            {'user_email': ''},
+            {'user_email': 'not-a-email'}
+        ]
+    )
+    def test_remove_user_invalid_email(self, data):
+        """
+        Тест на удаление пользователя с невалидным email
+        """
+        self.client.force_authenticate(self.admin_user)
+        response = self.client.post(self.url, data=data)
+        assert response.status_code == 400
+
+    def test_remove_user_not_admin(self):
+        """
+        Тест на удаление пользователя обычным пользователем
+        """
+        self.client.force_authenticate(self.regular_user)
+        response = self.client.post(self.url, data={'user_email': self.regular_user.email})
+        assert response.status_code == 403
+
+    def test_remove_user_unauthenticated_user(self):
+        """
+        Тест на удаление пользователя анонимным пользователем
+        """
+        response = self.client.post(self.url, data={'user_email': self.regular_user.email})
+        assert response.status_code == 401
