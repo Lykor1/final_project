@@ -1,4 +1,7 @@
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import (
+    CreateAPIView,
+    DestroyAPIView
+)
 from rest_framework.permissions import IsAdminUser
 
 from .models import Team
@@ -15,3 +18,13 @@ class TeamCreateAPIView(CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
+
+
+class TeamDeleteAPIView(DestroyAPIView):
+    """
+    Удаление команды админом
+    """
+    permission_classes = (IsAdminUser,)
+
+    def get_queryset(self):
+        return Team.objects.filter(creator=self.request.user)

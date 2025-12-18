@@ -89,3 +89,73 @@ class TestTeamCreateView:
         """
         response = self.client.post(self.url, data=self.team_data)
         assert response.status_code == 401
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestTeamDeleteView:
+    @pytest.fixture(autouse=True)
+    def setup(self, client, admin_user, team, create_superuser, admin_data):
+        self.url = reverse('teams:delete', kwargs={'pk': team.pk})
+        self.client = client
+        self.admin_user = admin_user
+        another_admin_data = admin_data.copy()
+        another_admin_data.update({'email': 'anotheradmin@example.com'})
+        self.another_admin = create_superuser(**another_admin_data)
+
+    def test_delete_team_success(self):
+        """
+        Тест на успешное удаление команды
+        """
+        self.client.force_authenticate(self.admin_user)
+        response = self.client.delete(self.url)
+        assert response.status_code == 204
+        assert Team.objects.count() == 0
+
+    def test_delete_someone_else_team(self, create_team, team_data):
+        """
+        Тест на удаление чужой команды
+        """
+        self.client.force_authenticate(self.another_admin)
+        response = self.client.delete(self.url)
+        assert response.status_code == 404
+        assert Team.objects.filter(creator=self.admin_user).exists()
+
+    def test_delete_team_regular_user(self, regular_user):
+        """
+        Тест на удаление команды обычным пользователем
+        """
+        self.client.force_authenticate(regular_user)
+        response = self.client.delete(self.url)
+        assert response.status_code == 403
+        assert Team.objects.count() == 1
+
+    def test_delete_team_members(self, regular_user, team):
+        """
+        Тест на удаление команды участником (обычным пользователем)
+        """
+        regular_user.team = team
+        regular_user.save()
+        self.client.force_authenticate(regular_user)
+        response = self.client.delete(self.url)
+        assert response.status_code == 403
+        assert Team.objects.count() == 1
+
+    def test_delete_team_members_admin(self, team):
+        """
+        Тест на удаление команды участником (админом)
+        """
+        self.another_admin.team = team
+        self.another_admin.save()
+        self.client.force_authenticate(self.another_admin)
+        response = self.client.delete(self.url)
+        assert response.status_code == 404
+        assert Team.objects.count() == 1
+
+    def test_delete_team_unauthenticated_user(self):
+        """
+        Тест на удаление команды анонимом
+        """
+        response = self.client.delete(self.url)
+        assert response.status_code == 401
+        assert Team.objects.count() == 1
