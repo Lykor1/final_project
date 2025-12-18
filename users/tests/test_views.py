@@ -2,11 +2,8 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework_simplejwt.tokens import (
-    RefreshToken,
-    OutstandingToken,
-    BlacklistedToken
+    RefreshToken
 )
-from datetime import datetime
 
 User = get_user_model()
 
