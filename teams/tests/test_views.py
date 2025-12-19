@@ -1,7 +1,10 @@
 import pytest
 from django.urls import reverse
+from django.contrib.auth import get_user_model
 
 from teams.models import Team
+
+User = get_user_model()
 
 
 @pytest.mark.views
@@ -288,6 +291,97 @@ class TestTeamRemoveUserView:
     def test_remove_user_unauthenticated_user(self):
         """
         Тест на удаление пользователя анонимным пользователем
+        """
+        response = self.client.post(self.url, data={'user_email': self.regular_user.email})
+        assert response.status_code == 401
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestTeamUpdateUserRoleView:
+    @pytest.fixture(autouse=True)
+    def setup(self, client, team, admin_user, regular_user):
+        self.url = reverse('teams:change-role', kwargs={'team_id': team.id})
+        self.client = client
+        self.admin = admin_user
+        regular_user.team = team
+        regular_user.role = User.Role.MANAGER
+        regular_user.save()
+        self.regular_user = regular_user
+
+    def test_change_role_success(self):
+        """
+        Тест на успешную смену роли пользователя
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.post(self.url, data={'user_email': self.regular_user.email, 'user_role': User.Role.USER})
+        assert response.status_code == 200
+        self.regular_user.refresh_from_db()
+        assert self.regular_user.role == User.Role.USER
+
+    @pytest.mark.parametrize(
+        'email, role',
+        [
+            ('test@', 'manag'),
+            ('@example', 'superadmin'),
+            ('test@com', ''),
+            ('', 'administrator'),
+            ('', '')
+        ]
+    )
+    def test_change_role_invalid_data(self, email, role):
+        """
+        Тест на смену роли пользователя с невалидными данными
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.post(self.url, data={'user_email': email, 'user_role': role})
+        assert response.status_code == 400
+        assert 'user_email' in str(response.data) or 'user_role' in str(response.data)
+
+    def test_change_role_default(self):
+        """
+        Тест на смену роли пользователя без указания роли
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.post(self.url, data={'user_email': self.regular_user.email})
+        assert response.status_code == 200
+        self.regular_user.refresh_from_db()
+        assert self.regular_user.role == User.Role.USER
+
+    def test_change_role_without_team(self):
+        """
+        Тест на смену роли пользователя без команды
+        """
+        self.regular_user.team = None
+        self.regular_user.save()
+        self.client.force_authenticate(self.admin)
+        response = self.client.post(self.url, data={'user_email': self.regular_user.email})
+        assert response.status_code == 400
+        assert 'не состоит' in str(response.data)
+
+    def test_change_role_in_other_team(self, create_team):
+        """
+        Тест на смену роли пользователя в другой команде
+        """
+        new_team = create_team(name='new team', creator=self.admin)
+        self.regular_user.team = new_team
+        self.regular_user.save()
+        self.client.force_authenticate(self.admin)
+        response = self.client.post(self.url, data={'user_email': self.regular_user.email})
+        assert response.status_code == 400
+        assert 'не состоит в данной' in str(response.data)
+
+    def test_change_role_not_admin_user(self):
+        """
+        Тест на смену роли пользователя обычном пользователем
+        """
+        self.client.force_authenticate(self.regular_user)
+        response = self.client.post(self.url, data={'user_email': self.regular_user.email})
+        assert response.status_code == 403
+
+    def test_change_role_unauthernticated_user(self):
+        """
+        Тест на смену роли пользователя анонимным пользователем
         """
         response = self.client.post(self.url, data={'user_email': self.regular_user.email})
         assert response.status_code == 401

@@ -95,7 +95,7 @@ class TeamUpdateUserRoleView(APIView):
         serializer = TeamUpdateUserRoleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = get_object_or_404(User, email=serializer.validated_data['user_email'])
-        role = serializer.validated_data['role']
+        role = serializer.validated_data['user_role']
         try:
             TeamService.change_user_role(team, user, role)
         except ValidationError as e:
