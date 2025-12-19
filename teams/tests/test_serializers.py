@@ -1,9 +1,13 @@
 import pytest
+from django.contrib.auth import get_user_model
 
 from teams.serializers import (
     TeamCreateSerializer,
-    TeamAddUserSerializer
+    TeamAddUserSerializer,
+    TeamUpdateUserRoleSerializer
 )
+
+User = get_user_model()
 
 
 @pytest.mark.serializers
@@ -77,10 +81,9 @@ class TestTeamCreateSerializer:
         assert serializer.validated_data['name'] == self.team_data['name']
 
 
+@pytest.mark.serializers
+@pytest.mark.django_db
 class TestTeamAddUserSerializer:
-    """
-    - email в разном регистре
-    """
 
     def test_valid_email(self, user_data):
         """
@@ -116,6 +119,75 @@ class TestTeamAddUserSerializer:
         serializer = TeamAddUserSerializer(data={})
         assert not serializer.is_valid()
         assert 'user_email' in serializer.errors
+
+    @pytest.mark.parametrize(
+        'email, expected',
+        [
+            ('TEST@EXAMPLE.COM', 'test@example.com'),
+            ('  test@example.com', 'test@example.com'),
+            ('test@example.com  ', 'test@example.com'),
+            ('  test@example.com  ', 'test@example.com'),
+        ]
+    )
+    def test_email_valid_correctly(self, email, expected):
+        """
+        Тест на правильную валидацию
+        """
+        serializer = TeamAddUserSerializer(data={'user_email': email})
+        assert serializer.is_valid()
+        assert serializer.validated_data['user_email'] == expected
+
+
+@pytest.mark.serializers
+@pytest.mark.django_db
+class TestTeamUpdateUserRoleSerializer:
+    def test_valid_data(self, regular_user):
+        """
+        Тест на валидные данные
+        """
+        serializer = TeamUpdateUserRoleSerializer(
+            data={'user_email': regular_user.email, 'user_role': User.Role.MANAGER})
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data['user_email'] == regular_user.email
+        assert serializer.validated_data['user_role'] == User.Role.MANAGER
+
+    @pytest.mark.parametrize(
+        'email, role',
+        [
+            ('invalid-email', 'manager'),
+            ('test@example.com', 'superadmin'),
+            ('test@', 'default'),
+            ('@example.com', 'u'),
+            ('test@.com', 'administrator'),
+            ('test@com', 'us'),
+            ('', ''),
+        ]
+    )
+    def test_invalid_data(self, email, role):
+        """
+        Тест на невалидные данные
+        """
+        serializer = TeamUpdateUserRoleSerializer(data={'user_email': email, 'user_role': role})
+        assert not serializer.is_valid()
+        assert 'user_email' in serializer.errors or 'user_role' in serializer.errors
+
+    def test_empty_email(self):
+        """
+        Тест на отсутствие email
+        """
+        serializer = TeamUpdateUserRoleSerializer(data={'user_role': 'manager'})
+        assert not serializer.is_valid()
+        assert 'user_email' in serializer.errors
+
+    def test_default_role(self, regular_user):
+        """
+        Тест на значение роли по умолчанию
+        """
+        regular_user.role = User.Role.MANAGER
+        regular_user.save()
+        serializer = TeamUpdateUserRoleSerializer(data={'user_email': regular_user.email})
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data['user_role'] == User.Role.USER
 
     @pytest.mark.parametrize(
         'email, expected',

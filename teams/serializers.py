@@ -23,3 +23,9 @@ class TeamAddUserSerializer(serializers.Serializer):
 
     def validate_user_email(self, value):
         return value.lower().strip()
+
+
+class TeamUpdateUserRoleSerializer(TeamAddUserSerializer):
+    user_email = serializers.EmailField(help_text='Email пользователя', required=True)
+    user_role = serializers.ChoiceField(choices=User.Role.choices, default=User.Role.USER,
+                                        help_text='Роль пользователя')
