@@ -33,7 +33,7 @@ class TeamService:
     def change_user_role(team: Team, user: User, role: User.Role) -> None:
         if not user.team:
             raise ValidationError(
-                'Пользователь не в команде'
+                'Пользователь не состоит в команде'
             )
         if user.team != team:
             raise ValidationError(
