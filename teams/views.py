@@ -13,7 +13,8 @@ from django.contrib.auth import get_user_model
 from .models import Team
 from .serializers import (
     TeamCreateSerializer,
-    TeamAddUserSerializer
+    TeamAddUserSerializer,
+    TeamUpdateUserRoleSerializer
 )
 from .services import TeamService
 
@@ -83,9 +84,27 @@ class TeamRemoveUserView(APIView):
         )
 
 
-"""
-Обновление роли пользователя
-"""
+class TeamUpdateUserRoleView(APIView):
+    """
+    Обновление роли пользователя
+    """
+    permission_classes = (IsAdminUser,)
+
+    def post(self, request, team_id):
+        team = get_object_or_404(Team, id=team_id, creator=self.request.user)
+        serializer = TeamUpdateUserRoleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = get_object_or_404(User, email=serializer.validated_data['user_email'])
+        role = serializer.validated_data['role']
+        try:
+            TeamService.change_user_role(team, user, role)
+        except ValidationError as e:
+            return Response({'detail': e.message}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {'detail': 'Роль пользователя успешно изменена'},
+            status=status.HTTP_200_OK
+        )
+
 
 """
 Просмотр информации о команде

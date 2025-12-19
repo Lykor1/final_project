@@ -27,3 +27,17 @@ class TeamService:
             )
         user.team = None
         user.save(update_fields=['team'])
+
+    @staticmethod
+    @transaction.atomic
+    def change_user_role(team: Team, user: User, role: User.Role) -> None:
+        if not user.team:
+            raise ValidationError(
+                'Пользователь не в команде'
+            )
+        if user.team != team:
+            raise ValidationError(
+                'Пользователь не состоит в данной команде'
+            )
+        user.role = role
+        user.save(update_fields=['role'])
