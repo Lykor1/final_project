@@ -385,3 +385,51 @@ class TestTeamUpdateUserRoleView:
         """
         response = self.client.post(self.url, data={'user_email': self.regular_user.email})
         assert response.status_code == 401
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestCurrentTeamDetailView:
+    """
+    - успех
+    - аноним
+    - без команды
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self, client, team, regular_user, admin_user):
+        regular_user.team = team
+        regular_user.save()
+        self.user = regular_user
+        self.client = client
+        self.admin = admin_user
+        self.team = team
+        self.url = reverse('teams:detail')
+
+    def test_get_current_team_success(self):
+        """
+        Тест на успешное получение команды
+        """
+        self.client.force_authenticate(self.user)
+        response = self.client.get(self.url)
+        assert response.status_code == 200
+        assert response.data['name'] == self.team.name
+        assert response.data['members'][0]['email'] == self.user.email
+        assert response.data['creator']['email'] == self.admin.email
+
+    def test_get_current_team_user_without_team(self):
+        """
+        Тест на получение команды пользователю без команды
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.get(self.url)
+        assert response.status_code == 404
+        assert 'не состоите в команде' in str(response.data)
+
+    def test_get_current_team_unauthenticated_user(self):
+        """
+        Тест на получение команды анонимным пользователем
+        """
+        response = self.client.get(self.url)
+        assert response.status_code == 401
+        assert 'не были предоставлены' in str(response.data)

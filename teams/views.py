@@ -1,20 +1,23 @@
 from django.core.exceptions import ValidationError
 from rest_framework import status
+from rest_framework.exceptions import NotFound
 from rest_framework.generics import (
     CreateAPIView,
     DestroyAPIView,
-    get_object_or_404
+    get_object_or_404,
+    RetrieveAPIView
 )
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from django.contrib.auth import get_user_model
 
 from .models import Team
 from .serializers import (
     TeamCreateSerializer,
     TeamAddUserSerializer,
-    TeamUpdateUserRoleSerializer
+    TeamUpdateUserRoleSerializer,
+    TeamDetailSerializer
 )
 from .services import TeamService
 
@@ -106,9 +109,19 @@ class TeamUpdateUserRoleView(APIView):
         )
 
 
-"""
-Просмотр информации о команде
-"""
+class CurrentTeamDetailView(RetrieveAPIView):
+    """
+    Просмотр информации о команде
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = TeamDetailSerializer
+
+    def get_object(self):
+        current_user = self.request.user
+        if not current_user.team:
+            raise NotFound('Вы не состоите в команде')
+        return current_user.team
+
 
 """
 Просмотр всех команд

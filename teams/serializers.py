@@ -47,7 +47,7 @@ class MembersSerializer(UserDetailSerializer):
 
 class TeamDetailSerializer(serializers.ModelSerializer):
     creator = MembersSerializer(read_only=True)
-    members = MembersSerializer(many=True, read_only=True)
+    members = MembersSerializer(many=True, read_only=True, source='members.all')
 
     class Meta:
         model = Team
