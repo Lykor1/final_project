@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 
 from .models import Team
-from users.serializers import UserDetailSerializer
+from users.serializers import UserDetailSerializer, UserListSerializer
 
 User = get_user_model()
 
@@ -52,4 +52,28 @@ class TeamDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
         fields = ('name', 'description', 'creator', 'members')
+        read_only_fields = fields
+
+
+class MembersListSerializer(UserListSerializer):
+    class Meta(UserListSerializer.Meta):
+        fields = (
+            'id',
+            'email',
+            'full_name',
+            'birthday',
+            'age',
+            'role',
+            'created_at'
+        )
+        read_only_fields = fields
+
+
+class TeamListSerializer(serializers.ModelSerializer):
+    creator = MembersListSerializer(read_only=True)
+    members = MembersListSerializer(many=True, read_only=True, source='members.all')
+
+    class Meta:
+        model = Team
+        fields = ('id', 'name', 'description', 'creator', 'members')
         read_only_fields = fields
