@@ -5,7 +5,8 @@ from rest_framework.generics import (
     CreateAPIView,
     DestroyAPIView,
     get_object_or_404,
-    RetrieveAPIView
+    RetrieveAPIView,
+    UpdateAPIView
 )
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -123,10 +124,17 @@ class CurrentTeamDetailView(RetrieveAPIView):
         return current_user.team
 
 
-"""
-Просмотр всех команд
-"""
+class TeamUpdateView(UpdateAPIView):
+    """
+    Обновление команды
+    """
+    permission_classes = (IsAdminUser,)
+    serializer_class = TeamCreateSerializer
+
+    def get_queryset(self):
+        return Team.objects.filter(creator=self.request.user)
+
 
 """
-Обновление команды
+Просмотр всех команд
 """

@@ -390,12 +390,6 @@ class TestTeamUpdateUserRoleView:
 @pytest.mark.views
 @pytest.mark.django_db
 class TestCurrentTeamDetailView:
-    """
-    - успех
-    - аноним
-    - без команды
-    """
-
     @pytest.fixture(autouse=True)
     def setup(self, client, team, regular_user, admin_user):
         regular_user.team = team
@@ -433,3 +427,107 @@ class TestCurrentTeamDetailView:
         response = self.client.get(self.url)
         assert response.status_code == 401
         assert 'не были предоставлены' in str(response.data)
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestTeamUpdateView:
+    """
+    - чужая команда
+    - не админ
+    - аноним
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self, client, admin_user, team):
+        self.url = reverse('teams:update', kwargs={'pk': team.pk})
+        self.client = client
+        self.admin = admin_user
+        self.team = team
+
+    def test_update_team_success(self):
+        """
+        Тест на успешное обновление команды
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.put(self.url, data={'name': 'new name', 'description': 'new description'})
+        assert response.status_code == 200
+        self.team.refresh_from_db()
+        assert self.team.name == 'new name'
+        assert self.team.description == 'new description'
+
+    def test_update_team_patch(self):
+        """
+        Тест на успешное частичное обновление команды
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.patch(self.url, data={'description': 'new description'})
+        assert response.status_code == 200
+        self.team.refresh_from_db()
+        assert self.team.name == 'test team'
+        assert self.team.description == 'new description'
+
+    def test_update_team_without_name(self):
+        """
+        Тест на обновление команды без поля name
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.put(self.url, data={'description': 'new description'})
+        assert response.status_code == 400
+        assert 'name' in str(response.data)
+
+    def test_update_team_without_description(self):
+        """
+        Тест на обновление команды без поля description
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.put(self.url, data={'name': 'new name'})
+        assert response.status_code == 200
+        self.team.refresh_from_db()
+        assert self.team.name == 'new name'
+
+    @pytest.mark.parametrize(
+        'name',
+        [
+            'ab',
+            'a',
+            ''
+        ]
+    )
+    def test_update_team_invalid_name(self, name):
+        """
+        Тест на обновление команды с невалидным именем
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.put(self.url, data={'name': name})
+        assert response.status_code == 400
+        assert 'name' in str(response.data)
+
+    def test_update_someone_else_team(self, create_superuser, admin_data):
+        """
+        Тест на обновление чужой команды
+        """
+        new_admin = create_superuser(
+            email='newadmin@example.com',
+            password=admin_data['password'],
+            first_name=admin_data['first_name'],
+            last_name=admin_data['last_name']
+        )
+        self.client.force_authenticate(new_admin)
+        response = self.client.put(self.url, data={'name': 'new name', 'description': 'new description'})
+        assert response.status_code == 404
+
+    def test_update_team_not_admin(self, regular_user):
+        """
+        Тест на обновление команды обычным пользователем
+        """
+        self.client.force_authenticate(regular_user)
+        response = self.client.put(self.url, data={'name': 'new name', 'description': 'new description'})
+        assert response.status_code == 403
+
+    def test_update_team_unauthenticated_user(self):
+        """
+        Тест на обновление команды анонимным пользователем
+        """
+        response = self.client.put(self.url, data={'name': 'new name', 'description': 'new description'})
+        assert response.status_code == 401

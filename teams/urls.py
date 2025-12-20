@@ -10,4 +10,5 @@ urlpatterns = [
     path('remove-user/', views.TeamRemoveUserView.as_view(), name='remove-user'),
     path('change-role/<int:team_id>/', views.TeamUpdateUserRoleView.as_view(), name='change-role'),
     path('detail/', views.CurrentTeamDetailView.as_view(), name='detail'),
+    path('update/<int:pk>', views.TeamUpdateView.as_view(), name='update'),
 ]
