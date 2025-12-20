@@ -35,8 +35,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
-    # TODO: Добавить список задач
-    # TODO: Добавить среднюю оценку за задачи
     team_name = serializers.SerializerMethodField()
     age = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()

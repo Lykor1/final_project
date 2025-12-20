@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -432,12 +434,6 @@ class TestCurrentTeamDetailView:
 @pytest.mark.views
 @pytest.mark.django_db
 class TestTeamUpdateView:
-    """
-    - чужая команда
-    - не админ
-    - аноним
-    """
-
     @pytest.fixture(autouse=True)
     def setup(self, client, admin_user, team):
         self.url = reverse('teams:update', kwargs={'pk': team.pk})
@@ -530,4 +526,62 @@ class TestTeamUpdateView:
         Тест на обновление команды анонимным пользователем
         """
         response = self.client.put(self.url, data={'name': 'new name', 'description': 'new description'})
+        assert response.status_code == 401
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestTeamListView:
+    @pytest.fixture(autouse=True)
+    def setup(self, client, admin_user, create_user, user_data, create_team):
+        self.url = reverse('teams:list')
+        self.client = client
+        self.teams = []
+        for i in range(3):
+            self.teams.append(
+                create_team(
+                    name=f'{i}',
+                    description=f'description{i}',
+                    creator=admin_user
+                )
+            )
+        self.users = []
+        for i in range(3):
+            self.users.append(
+                create_user(
+                    email=f'test{i}@example.com',
+                    password=user_data['password'],
+                    first_name=user_data['first_name'],
+                    last_name=user_data['last_name'],
+                    birthday=date(2000, 1, i + 1),
+                    team=self.teams[i],
+                )
+            )
+        self.admin = admin_user
+
+    def test_team_list_success(self):
+        """
+        Тест на успешное получение списка команд
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.get(self.url)
+        assert response.status_code == 200
+        assert len(response.data) == len(self.teams)
+        assert response.data[0]['name'] == self.teams[0].name
+        assert response.data[0]['creator']['email'] == self.admin.email
+        assert response.data[0]['members'][0]['email'] == self.users[0].email
+
+    def test_team_list_not_admin(self, regular_user):
+        """
+        Тест на получение списка команд обычным пользователем
+        """
+        self.client.force_authenticate(regular_user)
+        response = self.client.get(self.url)
+        assert response.status_code == 403
+
+    def test_team_list_unauthenticated_user(self):
+        """
+        Тест на получение списка команд анонимным пользователем
+        """
+        response = self.client.get(self.url)
         assert response.status_code == 401
