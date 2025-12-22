@@ -11,6 +11,7 @@ User = get_user_model()
 def validate_future_date(value):
     if value and value < timezone.now():
         raise ValidationError("Дата не может быть в прошлом.")
+    return value
 
 
 class Task(models.Model):

@@ -1,0 +1,28 @@
+from django.core.exceptions import ValidationError
+from rest_framework import serializers
+
+from .models import Task, validate_future_date
+
+
+class TaskCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = ('title', 'description', 'deadline', 'status', 'assigned_to')
+
+    def validate_title(self, value):
+        value = value.strip()
+        if len(value) < 3:
+            raise serializers.ValidationError('Название задачи должно содержать минимум 3 символа')
+        return value
+
+    def validate_deadline(self, value):
+        return validate_future_date(value)
+
+    def validate(self, attrs):
+        status = attrs.get('status')
+        assigned_to = attrs.get('assigned_to')
+        if status in [Task.Status.IN_PROGRESS, Task.Status.DONE] and assigned_to is None:
+            raise ValidationError(
+                {'status': "Нельзя установить статус задачи 'В работе' или 'Выполнена' без исполнителя"}
+            )
+        return attrs
