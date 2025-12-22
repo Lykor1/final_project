@@ -38,7 +38,7 @@ def create_superuser():
 
 
 @pytest.fixture
-def create_tasks():
+def create_task():
     def _create_tasks(**kwargs):
         return Task.objects.create(**kwargs)
 

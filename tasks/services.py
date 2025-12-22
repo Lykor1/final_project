@@ -21,3 +21,8 @@ class TaskService:
             assigned_to=assigned_to,
             **task_data
         )
+
+    @staticmethod
+    @transaction.atomic
+    def update_task():
+        pass

@@ -26,3 +26,14 @@ class TaskCreateSerializer(serializers.ModelSerializer):
                 {'status': "Нельзя установить статус задачи 'В работе' или 'Выполнена' без исполнителя"}
             )
         return attrs
+
+
+class TaskUpdateSerializer(TaskCreateSerializer):
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if self.instance and self.instance.status == Task.Status.DONE:
+            if 'deadline' in attrs:
+                raise serializers.ValidationError({'deadline': 'Нельзя изменять срок исполнения у выполненной задачи'})
+            if 'assigned_to' in attrs:
+                raise serializers.ValidationError({'assigned_to': 'Нельзя изменить исполнителя у выполненной задачи'})
+        return attrs
