@@ -1,4 +1,4 @@
-from django.core.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied
 from django.db import transaction
 
 from .models import Task
@@ -13,6 +13,8 @@ class TaskService:
         """
         if not team.members.filter(id=assigned_to.id).exists():
             raise ValidationError({'assigned_to': 'Исполнитель должен быть в составе команды'})
+        if not team.creator == created_by:
+            raise PermissionDenied({'created_by': 'Создавать задачи может только создатель команды'})
         return Task.objects.create(
             created_by=created_by,
             team=team,

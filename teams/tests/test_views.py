@@ -12,11 +12,6 @@ User = get_user_model()
 @pytest.mark.views
 @pytest.mark.django_db
 class TestTeamCreateView:
-    """
-    - не админ создаёт
-    - аноним
-    """
-
     @pytest.fixture(autouse=True)
     def setup(self, admin_user, regular_user, client, team_data):
         self.url = reverse('teams:create')
