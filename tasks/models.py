@@ -1,3 +1,41 @@
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.contrib.auth import get_user_model
+from django.utils import timezone
 
-# Create your models here.
+from teams.models import Team
+
+User = get_user_model()
+
+
+def validate_future_date(value):
+    if value < timezone.now():
+        raise ValidationError("Дата не может быть в прошлом.")
+
+
+class Task(models.Model):
+    class Status(models.TextChoices):
+        OPEN = 'open', 'открытая'
+        IN_PROGRESS = 'in_progress', 'в работе'
+        DONE = 'done', 'выполнена'
+
+    title = models.CharField(max_length=100, verbose_name='Название задачи')
+    description = models.TextField(blank=True, verbose_name='Описание задачи')
+    deadline = models.DateTimeField(validators=[validate_future_date], verbose_name='Срок исполнения')
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.OPEN,
+                              verbose_name='Статус задачи')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_tasks', db_index=True,
+                                   verbose_name='Автор задачи')
+    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='assigned_tasks', blank=True,
+                                    null=True, verbose_name='Исполнитель')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='team_tasks', verbose_name='Команда')
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Создано')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлено')
+
+    class Meta:
+        verbose_name = 'Задача'
+        verbose_name_plural = 'Задачи'
+        ordering = ['created_by', '-created_at']
+
+    def __str__(self):
+        return self.title
