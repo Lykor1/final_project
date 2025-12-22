@@ -8,11 +8,6 @@ from tasks.models import Task
 @pytest.mark.serializers
 @pytest.mark.django_db
 class TestTaskCreateSerializer:
-    """
-    - без обязательных полей
-    - без необязательных полей
-    """
-
     @pytest.fixture(autouse=True)
     def setup(self, task_data, create_user, user_data):
         self.user = create_user(**user_data)
