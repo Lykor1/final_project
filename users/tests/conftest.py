@@ -50,14 +50,6 @@ def user_data(adult_birthday):
 
 
 @pytest.fixture
-def create_user():
-    def _create_user(**kwargs):
-        return User.objects.create_user(**kwargs)
-
-    return _create_user
-
-
-@pytest.fixture
 def user(create_user, user_data):
     return create_user(**user_data)
 

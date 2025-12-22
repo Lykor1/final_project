@@ -7,22 +7,6 @@ User = get_user_model()
 
 
 @pytest.fixture
-def create_superuser():
-    def _create_superuser(**kwargs):
-        return User.objects.create_superuser(**kwargs)
-
-    return _create_superuser
-
-
-@pytest.fixture
-def create_user():
-    def _create_user(**kwargs):
-        return User.objects.create_user(**kwargs)
-
-    return _create_user
-
-
-@pytest.fixture
 def user_data():
     return {
         'email': 'test@example.com',
@@ -59,14 +43,6 @@ def team_data(admin_user):
         'description': 'test description',
         'creator': admin_user,
     }
-
-
-@pytest.fixture
-def create_team():
-    def _create_team(**kwargs):
-        return Team.objects.create(**kwargs)
-
-    return _create_team
 
 
 @pytest.fixture

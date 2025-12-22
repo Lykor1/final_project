@@ -9,7 +9,7 @@ User = get_user_model()
 
 
 def validate_future_date(value):
-    if value < timezone.now():
+    if value and value < timezone.now():
         raise ValidationError("Дата не может быть в прошлом.")
 
 
@@ -21,7 +21,7 @@ class Task(models.Model):
 
     title = models.CharField(max_length=100, verbose_name='Название задачи')
     description = models.TextField(blank=True, verbose_name='Описание задачи')
-    deadline = models.DateTimeField(validators=[validate_future_date], verbose_name='Срок исполнения')
+    deadline = models.DateTimeField(verbose_name='Срок исполнения')
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.OPEN,
                               verbose_name='Статус задачи')
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_tasks', db_index=True,
@@ -36,6 +36,14 @@ class Task(models.Model):
         verbose_name = 'Задача'
         verbose_name_plural = 'Задачи'
         ordering = ['created_by', '-created_at']
+
+    def clean(self):
+        super().clean()
+        validate_future_date(self.deadline)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
