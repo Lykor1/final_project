@@ -24,13 +24,13 @@ class TaskService:
 
     @staticmethod
     @transaction.atomic
-    def update_task(*, task, **task_data):
+    def update_task(*, task, team, **task_data):
         """
         Обновление задачи
         """
         if 'assigned_to' in task_data:
             assigned_to = task_data['assigned_to']
-            if not task.team.members.filter(id=assigned_to.id).exists():
+            if not team.members.filter(id=assigned_to.id).exists():
                 raise ValidationError({'assigned_to': 'Исполнитель должен быть в составе команды'})
         for field, value in task_data.items():
             setattr(task, field, value)

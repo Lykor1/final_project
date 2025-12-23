@@ -90,10 +90,6 @@ class TestTaskCreateSerializer:
 @pytest.mark.serializers
 @pytest.mark.django_db
 class TestTaskUpdateSerializer:
-    """
-    - смена дедлайна у завершённой задачи
-    """
-
     @pytest.fixture(autouse=True)
     def setup(self, task_data, create_task, create_user, user_data, create_superuser, admin_user_data, create_team,
               team_data):

@@ -39,8 +39,10 @@ class TaskUpdateView(UpdateAPIView):
         return Task.objects.filter(created_by=self.request.user)
 
     def perform_update(self, serializer):
+        team = get_object_or_404(Team, pk=self.kwargs['team_id'])
         task = self.get_object()
         self.instance = TaskService.update_task(
             task=task,
+            team=team,
             **serializer.validated_data
         )

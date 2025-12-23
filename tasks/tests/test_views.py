@@ -1,5 +1,6 @@
 import pytest
 from django.urls import reverse
+from django.utils import timezone
 
 from tasks.models import Task
 
@@ -7,12 +8,6 @@ from tasks.models import Task
 @pytest.mark.views
 @pytest.mark.django_db
 class TestTaskCreateView:
-    """
-    - чужая команда
-    - обычный пользователь
-    - аноним
-    """
-
     @pytest.fixture(autouse=True)
     def setup(self, task_data, create_superuser, admin_user_data, client, create_user, user_data, create_team,
               team_data):
@@ -123,4 +118,139 @@ class TestTaskCreateView:
         Тест на создание задачи анонимным пользователем
         """
         response = self.client.post(self.url, data=task_data)
+        assert response.status_code == 401
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestTaskUpdateView:
+    """
+    - обычный ползоватлем
+    - аноним
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self, create_team, team_data, create_superuser, admin_user_data, task_data, create_task, create_user,
+              user_data, client):
+        self.admin = create_superuser(**admin_user_data)
+        team = create_team(creator=self.admin, **team_data)
+        self.task = create_task(created_by=self.admin, team=team, **task_data)
+        self.user = create_user(team=team, **user_data)
+        self.new_task_data = {
+            'title': 'new title',
+            'description': 'new description',
+            'deadline': timezone.now() + timezone.timedelta(days=10),
+            'status': 'in_progress',
+            'assigned_to': self.user.id,
+        }
+        self.client = client
+        self.url = reverse('tasks:update', kwargs={'team_id': team.id, 'pk': self.task.pk})
+
+    def test_update_task_success(self):
+        """
+        Тест на успешное обновление задачи
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.put(self.url, data=self.new_task_data)
+        assert response.status_code == 200
+        self.task.refresh_from_db()
+        assert self.task.title == self.new_task_data['title']
+        assert self.task.description == self.new_task_data['description']
+        assert self.task.deadline == self.new_task_data['deadline']
+        assert self.task.status == Task.Status.IN_PROGRESS
+
+    @pytest.mark.parametrize(
+        'field',
+        [
+            'title',
+            'deadline',
+        ]
+    )
+    def test_update_task_without_required_fields(self, field):
+        """
+        Тест на обновление задачи без обязательных полей
+        """
+        self.client.force_authenticate(self.admin)
+        self.new_task_data.pop(field)
+        response = self.client.put(self.url, data=self.new_task_data)
+        assert response.status_code == 400
+        assert field in response.data
+
+    @pytest.mark.parametrize(
+        'field',
+        [
+            'description',
+            'status',
+        ]
+    )
+    def test_update_task_without_optional_fields(self, field):
+        """
+        Тест на обновление задачи без опциональных полей
+        """
+        self.client.force_authenticate(self.admin)
+        self.new_task_data.pop(field)
+        response = self.client.put(self.url, data=self.new_task_data)
+        assert response.status_code == 200
+
+    def test_partial_update_task_success(self):
+        """
+        Тест на частичное обновление задачи
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.patch(self.url, data={'title': self.new_task_data['title']})
+        assert response.status_code == 200
+        self.task.refresh_from_db()
+        assert self.task.title == self.new_task_data['title']
+
+    def test_update_task_not_fount_team(self):
+        """
+        Тест на обновление несуществующей задачи
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.put(
+            reverse('tasks:update', kwargs={'team_id': 999, 'pk': self.task.pk}),
+            data=self.new_task_data
+        )
+        assert response.status_code == 404
+        assert 'no team matches' in str(response.data).lower()
+
+    def test_update_someone_else_task(self, admin_user_data, create_superuser):
+        """
+        Тест на обновление чужой задачи
+        """
+        new_admin = create_superuser(
+            email='newadmin@example.com',
+            password=admin_user_data['password'],
+            first_name=admin_user_data['first_name'],
+            last_name=admin_user_data['last_name'],
+        )
+        self.client.force_authenticate(new_admin)
+        response = self.client.put(self.url, data=self.new_task_data)
+        assert response.status_code == 404
+        assert 'no task matches' in str(response.data).lower()
+
+    def test_update_task_with_assigned_to_not_in_team(self):
+        """
+        Тест на обновление задачи с исполнителем вне команды
+        """
+        self.user.team = None
+        self.user.save()
+        self.client.force_authenticate(self.admin)
+        response = self.client.put(self.url, data=self.new_task_data)
+        assert response.status_code == 400
+        assert 'исполнитель должен быть в составе команды' in str(response.data).lower()
+
+    def test_update_task_not_admin(self):
+        """
+        Тест на обновление задачи обычным пользователем
+        """
+        self.client.force_authenticate(self.user)
+        response = self.client.put(self.url, data=self.new_task_data)
+        assert response.status_code == 403
+
+    def test_update_task_unathenticated_user(self):
+        """
+        Тест на обновление задачи анонимным пользователем
+        """
+        response = self.client.put(self.url, data=self.new_task_data)
         assert response.status_code == 401
