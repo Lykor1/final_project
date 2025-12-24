@@ -1,7 +1,8 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.generics import (
     CreateAPIView,
-    UpdateAPIView
+    UpdateAPIView,
+    DestroyAPIView
 )
 from rest_framework.permissions import IsAdminUser
 
@@ -46,3 +47,14 @@ class TaskUpdateView(UpdateAPIView):
             team=team,
             **serializer.validated_data
         )
+
+
+class TaskDeleteView(DestroyAPIView):
+    """
+    Удаление задачи
+    """
+    permission_classes = (IsAdminUser,)
+    queryset = Task.objects.all()
+
+    def get_queryset(self):
+        return Task.objects.filter(created_by=self.request.user, team_id=self.kwargs['team_id'])

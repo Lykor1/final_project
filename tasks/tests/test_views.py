@@ -124,11 +124,6 @@ class TestTaskCreateView:
 @pytest.mark.views
 @pytest.mark.django_db
 class TestTaskUpdateView:
-    """
-    - обычный ползоватлем
-    - аноним
-    """
-
     @pytest.fixture(autouse=True)
     def setup(self, create_team, team_data, create_superuser, admin_user_data, task_data, create_task, create_user,
               user_data, client):
@@ -253,4 +248,81 @@ class TestTaskUpdateView:
         Тест на обновление задачи анонимным пользователем
         """
         response = self.client.put(self.url, data=self.new_task_data)
+        assert response.status_code == 401
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestTaskDeleteView:
+    @pytest.fixture(autouse=True)
+    def setup(self, client, admin_user_data, create_superuser, create_team, team_data, task_data, create_task):
+        self.admin = create_superuser(**admin_user_data)
+        self.team = create_team(creator=self.admin, **team_data)
+        self.task = create_task(created_by=self.admin, team=self.team, **task_data)
+        self.client = client
+        self.url = reverse('tasks:delete', kwargs={
+            'team_id': self.team.id,
+            'pk': self.task.pk
+        })
+
+    def test_delete_task_success(self):
+        """
+        Тест на успешное удаление задачи
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.delete(self.url)
+        assert response.status_code == 204
+
+    def test_delete_task_not_team(self):
+        """
+        Тест на удаление задачи с несуществующей командой
+        """
+        self.client.force_authenticate(self.admin)
+        fail_url = reverse('tasks:delete', kwargs={
+            'team_id': 999,
+            'pk': self.task.pk
+        })
+        response = self.client.delete(fail_url)
+        assert response.status_code == 404
+
+    def test_delete_task_not_task(self):
+        """
+        Тест на удаление несуществующей задачи
+        """
+        self.client.force_authenticate(self.admin)
+        fail_url = reverse('tasks:delete', kwargs={
+            'team_id': self.team.id,
+            'pk': 999
+        })
+        response = self.client.delete(fail_url)
+        assert response.status_code == 404
+
+    def test_delete_someone_else_task(self, create_superuser, admin_user_data):
+        """
+        Тест на удаление чужой задачи
+        """
+        new_admin = create_superuser(
+            email='newadmin@example.com',
+            password=admin_user_data['password'],
+            first_name=admin_user_data['first_name'],
+            last_name=admin_user_data['last_name'],
+        )
+        self.client.force_authenticate(new_admin)
+        response = self.client.delete(self.url)
+        assert response.status_code == 404
+
+    def test_delete_task_not_admin(self, create_user, user_data):
+        """
+        Тест на удаление задачи обычным пользователем
+        """
+        user = create_user(**user_data)
+        self.client.force_authenticate(user)
+        response = self.client.delete(self.url)
+        assert response.status_code == 403
+
+    def test_delete_task_unauthenticated_user(self):
+        """
+        Тест на удаление задачи анонимным пользователем
+        """
+        response = self.client.delete(self.url)
         assert response.status_code == 401
