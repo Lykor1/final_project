@@ -1,7 +1,7 @@
-from rest_framework.exceptions import ValidationError, PermissionDenied
 from django.db import transaction
+from rest_framework.exceptions import ValidationError, PermissionDenied
 
-from .models import Task
+from .models import Task, Comment
 
 
 class TaskService:
@@ -36,3 +36,14 @@ class TaskService:
             setattr(task, field, value)
         task.save()
         return task
+
+
+class CommentService:
+    @staticmethod
+    def check_create_comment_permission(*, current_user, task):
+        """
+        Создание комментария
+        """
+        team = task.team
+        if not team.creator == current_user or team.members.filter(id=current_user.id).exists():
+            raise PermissionDenied({'author': 'Комментировать может только создатель команды или её участники'})

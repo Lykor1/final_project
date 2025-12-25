@@ -4,12 +4,12 @@ from rest_framework.generics import (
     UpdateAPIView,
     DestroyAPIView
 )
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from teams.models import Team
-from .models import Task
-from .serializers import TaskCreateSerializer, TaskUpdateSerializer
-from .services import TaskService
+from .models import Task, Comment
+from .serializers import TaskCreateSerializer, TaskUpdateSerializer, CommentCreateSerializer
+from .services import TaskService, CommentService
 
 
 class TaskCreateView(CreateAPIView):
@@ -58,3 +58,23 @@ class TaskDeleteView(DestroyAPIView):
 
     def get_queryset(self):
         return Task.objects.filter(created_by=self.request.user, team_id=self.kwargs['team_id'])
+
+
+class CommentCreateView(CreateAPIView):
+    """
+    Создание комментария
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = CommentCreateSerializer
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        task = get_object_or_404(Task, pk=self.kwargs['task_id'])
+        CommentService.check_create_comment_permission(
+            current_user=user,
+            task=task,
+        )
+        serializer.save(
+            task=task,
+            author=user
+        )
