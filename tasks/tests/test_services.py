@@ -8,29 +8,39 @@ from tasks.services import TaskService, CommentService
 
 @pytest.mark.services
 @pytest.mark.django_db
-class TestCreateTask:
+class TestCheckCreateTaskPermission:
     @pytest.fixture(autouse=True)
     def setup(self, create_user, user_data, create_superuser, admin_user_data, team_data, create_team):
         self.admin = create_superuser(**admin_user_data)
         self.team = create_team(creator=self.admin, **team_data)
         self.user = create_user(team=self.team, **user_data)
 
-    def test_create_task_service_success(self, task_data):
+    def test_create_task_service_success(self):
         """
-        Тест на правильную работу сервиса для создания задачи
+        Тест на успешную проверку прав для создания задачи
         """
-        task = TaskService.create_task(created_by=self.admin, team=self.team, assigned_to=self.user, **task_data)
-        task.refresh_from_db()
-        assert Task.objects.count() == 1
+        TaskService.check_create_task_permission(created_by=self.admin, team=self.team, assigned_to=self.user)
 
-    def test_create_task_service_assigned_to_without_team(self, task_data):
+    def test_create_task_service_assigned_to_without_team(self):
         """
-        Тест на работу сервиса с исполнителем без команды
+        Тест на проверку прав исполнителя без команды
         """
         self.user.team = None
         self.user.save()
         with pytest.raises(ValidationError):
-            TaskService.create_task(created_by=self.admin, team=self.team, assigned_to=self.user, **task_data)
+            TaskService.check_create_task_permission(created_by=self.admin, team=self.team, assigned_to=self.user)
+
+    def test_create_task_service_not_team_created_by(self):
+        """
+        Тест на проверку прав не создателя команды
+        """
+        self.admin.team = self.team
+        self.admin.save()
+        with pytest.raises(PermissionDenied):
+            TaskService.check_create_task_permission(created_by=self.user, team=self.team, assigned_to=self.admin)
+
+    def test_create_task_service_not_assigned_to(self):
+        TaskService.check_create_task_permission(created_by=self.admin, team=self.team)
 
 
 @pytest.mark.services

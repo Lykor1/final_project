@@ -21,10 +21,15 @@ class TaskCreateView(CreateAPIView):
 
     def perform_create(self, serializer):
         team = get_object_or_404(Team, pk=self.kwargs['team_id'])
-        self.instance = TaskService.create_task(
-            created_by=self.request.user,
+        user = self.request.user
+        TaskService.check_create_task_permission(
+            created_by=user,
             team=team,
-            **serializer.validated_data
+            assigned_to=serializer.validated_data['assigned_to']
+        )
+        serializer.save(
+            created_by=user,
+            team=team
         )
 
 
