@@ -5,7 +5,9 @@ from tasks.serializers import (
     TaskCreateSerializer,
     TaskUpdateSerializer,
     CommentCreateSerializer,
-    CommentListSerializer
+    CommentListSerializer,
+    TaskListUserSerializer,
+    TaskListAdminSerializer
 )
 from tasks.models import Task, Comment
 
@@ -208,12 +210,112 @@ class TestCommentListSerializer:
             task=self.task,
         )
 
-    def test_list_comment_display_field(self):
+    def test_list_comment_success(self):
         """
-        Тест на отображаемые поля
+        Тест на успешное отображение комментария
         """
         serializer = CommentListSerializer(instance=self.comment)
         expected_fields = {'author', 'text'}
         assert set(serializer.data.keys()) == expected_fields
         assert serializer.data['author'] == self.admin.id
         assert serializer.data['text'] == 'test'
+
+
+@pytest.mark.serializers
+@pytest.mark.django_db
+class TestTaskListUserSerializer:
+    @pytest.fixture(autouse=True)
+    def setup(self, create_superuser, admin_user_data, team_data, create_team, task_data, create_task, create_user,
+              user_data):
+        self.admin = create_superuser(**admin_user_data)
+        self.team = create_team(creator=self.admin, **team_data)
+        self.task = create_task(created_by=self.admin, team=self.team, **task_data)
+        self.user = create_user(team=self.team, **user_data)
+        self.comments = []
+        for i in range(3):
+            self.comments.append(Comment.objects.create(
+                author=self.user,
+                text=f'test comment {i}',
+                task=self.task,
+            ))
+
+    @pytest.fixture
+    def create_serializer(self):
+        return TaskListUserSerializer(instance=self.task)
+
+    def test_list_task_display_fields(self, create_serializer):
+        """
+        Тест на отображение полей
+        """
+        serializer = create_serializer
+        expected_fields = {'title', 'description', 'deadline', 'status', 'created_by', 'created_at', 'updated_at',
+                           'comments'}
+        assert set(serializer.data.keys()) == expected_fields
+
+    def test_list_task_correct_info(self, create_serializer):
+        """
+        Тест на корректное отображение задачи
+        """
+        serializer = create_serializer
+        assert serializer.data['title'] == self.task.title
+        assert serializer.data['description'] == self.task.description
+        assert serializer.data['status'] == self.task.status
+        assert len(serializer.data['comments']) == len(self.comments)
+
+    def test_list_task_comment_correct_info(self, create_serializer):
+        """
+        Тест на корректное отображение комментариев у задачи
+        """
+        serializer = create_serializer
+        assert serializer.data['comments'][0]['author'] == self.user.id
+        assert serializer.data['comments'][-1]['text'] == self.comments[0].text
+
+
+@pytest.mark.serializers
+@pytest.mark.django_db
+class TestTaskListAdminSerializer:
+    @pytest.fixture(autouse=True)
+    def setup(self, create_superuser, admin_user_data, team_data, create_team, task_data, create_task):
+        self.admin = create_superuser(**admin_user_data)
+        self.team = create_team(creator=self.admin, **team_data)
+        self.task = create_task(created_by=self.admin, team=self.team, **task_data)
+        self.comments = []
+        for i in range(3):
+            self.comments.append(Comment.objects.create(
+                author=self.admin,
+                text=f'test comment {i}',
+                task=self.task,
+            ))
+
+    @pytest.fixture
+    def create_serializer(self):
+        return TaskListAdminSerializer(instance=self.task)
+
+    def test_list_task_display_fields(self, create_serializer):
+        """
+        Тест на отображение полей
+        """
+        serializer = create_serializer
+        expected_fields = {'id', 'title', 'description', 'deadline', 'status', 'assigned_to', 'team', 'created_at',
+                           'updated_at', 'comments'}
+        assert set(serializer.data.keys()) == expected_fields
+
+    def test_list_task_correct_info(self, create_serializer):
+        """
+        Тест на корректное отображение задачи
+        """
+        serializer = create_serializer
+        assert serializer.data['id'] == self.task.id
+        assert serializer.data['title'] == self.task.title
+        assert serializer.data['description'] == self.task.description
+        assert serializer.data['status'] == self.task.status
+        assert serializer.data['team'] == self.team.id
+        assert len(serializer.data['comments']) == len(self.comments)
+
+    def test_list_comment_correct_info(self, create_serializer):
+        """
+        Тест на корректное отображение комментариев у задачи
+        """
+        serializer = create_serializer
+        assert serializer.data['comments'][0]['author'] == self.admin.id
+        assert serializer.data['comments'][-1]['text'] == self.comments[0].text
