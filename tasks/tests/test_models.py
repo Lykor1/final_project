@@ -1,6 +1,5 @@
 import pytest
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 from django.utils import timezone
 
 from tasks.models import Task
@@ -9,11 +8,6 @@ from tasks.models import Task
 @pytest.mark.models
 @pytest.mark.django_db
 class TestTaskModel:
-    """
-    - str
-    - ordering
-    """
-
     @pytest.fixture(autouse=True)
     def setup(self, create_user, create_superuser, create_team, team_data, user_data, admin_user_data):
         self.admin = create_superuser(**admin_user_data)
