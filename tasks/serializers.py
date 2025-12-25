@@ -53,3 +53,22 @@ class CommentListSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ('author', 'text')
         read_only_fields = fields
+
+
+class TaskListUserSerializer(serializers.ModelSerializer):
+    comments = CommentListSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = Task
+        fields = ('title', 'description', 'deadline', 'status', 'created_by', 'created_by', 'updated_at', 'comments')
+        read_only_fields = fields
+
+
+class TaskListAdminSerializer(serializers.ModelSerializer):
+    comments = CommentListSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = Task
+        fields = ('id', 'title', 'description', 'deadline', 'status', 'assigned_to', 'team', 'created_at', 'updated_at',
+                  'comments')
+        read_only_fields = fields
