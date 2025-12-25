@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
-from .models import Task, validate_future_date
+from .models import Task, validate_future_date, Comment
 
 
 class TaskCreateSerializer(serializers.ModelSerializer):
@@ -37,3 +37,12 @@ class TaskUpdateSerializer(TaskCreateSerializer):
             if 'assigned_to' in attrs:
                 raise serializers.ValidationError({'assigned_to': 'Нельзя изменить исполнителя у выполненной задачи'})
         return attrs
+
+
+class CommentCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ('text',)
+
+    def validate_text(self, value):
+        return value.strip()
