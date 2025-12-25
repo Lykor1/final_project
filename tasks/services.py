@@ -14,19 +14,16 @@ class TaskService:
             raise ValidationError({'assigned_to': 'Исполнитель должен быть в составе команды'})
 
     @staticmethod
-    @transaction.atomic
-    def update_task(*, task, team, **task_data):
+    def check_update_task_permission(*, user, task, data):
         """
-        Обновление задачи
+        Проверка прав для обновления задачи
         """
-        if 'assigned_to' in task_data:
-            assigned_to = task_data['assigned_to']
-            if not team.members.filter(id=assigned_to.id).exists():
+        if task.created_by != user:
+            raise PermissionDenied({'created_by': 'Обновлять задачу может только создатель задачи'})
+        if 'assigned_to' in data:
+            assigned_to = data['assigned_to']
+            if assigned_to is not None and not task.team.members.filter(id=assigned_to.id).exists():
                 raise ValidationError({'assigned_to': 'Исполнитель должен быть в составе команды'})
-        for field, value in task_data.items():
-            setattr(task, field, value)
-        task.save()
-        return task
 
 
 class CommentService:

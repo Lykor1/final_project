@@ -2,7 +2,6 @@ import pytest
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError, PermissionDenied
 
-from tasks.models import Task
 from tasks.services import TaskService, CommentService
 
 
@@ -45,14 +44,14 @@ class TestCheckCreateTaskPermission:
 
 @pytest.mark.services
 @pytest.mark.django_db
-class TestUpdateTask:
+class TestCheckUpdateTaskPermission:
     @pytest.fixture(autouse=True)
     def setup(self, create_superuser, admin_user_data, team_data, create_team, create_task, task_data, create_user,
               user_data):
-        admin = create_superuser(**admin_user_data)
-        self.team = create_team(creator=admin, **team_data)
+        self.admin = create_superuser(**admin_user_data)
+        self.team = create_team(creator=self.admin, **team_data)
         self.user = create_user(team=self.team, **user_data)
-        self.task = create_task(team=self.team, created_by=admin, **task_data)
+        self.task = create_task(team=self.team, created_by=self.admin, **task_data)
         self.new_task_data = {
             'title': 'new title',
             'description': 'new description',
@@ -63,31 +62,25 @@ class TestUpdateTask:
 
     def test_update_task_service_success(self):
         """
-        Тест на успешное обновление задачи сервисом
+        Тест на успешную проверку прав для обновления задачи
         """
-        task = TaskService.update_task(task=self.task, team=self.team, **self.new_task_data)
-        task.refresh_from_db()
-        assert task.title == self.new_task_data['title']
-        assert task.description == self.new_task_data['description']
-        assert task.status == Task.Status.IN_PROGRESS
-
-    def test_update_task_service_partial_success(self, task_data):
-        """
-        Тест на частичное обновление задачи сервисом
-        """
-        task = TaskService.update_task(task=self.task, team=self.team, title=self.new_task_data['title'])
-        task.refresh_from_db()
-        assert task.title == self.new_task_data['title']
-        assert task.description == task_data['description']
+        TaskService.check_update_task_permission(user=self.admin, task=self.task, data=self.new_task_data)
 
     def test_update_task_service_assigned_to_not_with_team(self):
         """
-        Тест на обновление задачи сервисом с исполнителем без команды
+        Тест на проверку прав для обновления задачи с исполнителем без команды
         """
         self.user.team = None
         self.user.save()
         with pytest.raises(ValidationError):
-            TaskService.update_task(task=self.task, team=self.team, **self.new_task_data)
+            TaskService.check_update_task_permission(user=self.admin, task=self.task, data=self.new_task_data)
+
+    def test_update_task_service_not_created_by(self):
+        """
+        Тест на проверку прав для обновления задачи не создателем задачи
+        """
+        with pytest.raises(PermissionDenied):
+            TaskService.check_update_task_permission(user=self.user, task=self.task, data=self.new_task_data)
 
 
 @pytest.mark.services

@@ -207,7 +207,7 @@ class TestTaskUpdateView:
             data=self.new_task_data
         )
         assert response.status_code == 404
-        assert 'no team matches' in str(response.data).lower()
+        assert 'no task matches' in str(response.data).lower()
 
     def test_update_someone_else_task(self, admin_user_data, create_superuser):
         """

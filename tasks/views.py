@@ -42,16 +42,16 @@ class TaskUpdateView(UpdateAPIView):
     queryset = Task.objects.all()
 
     def get_queryset(self):
-        return Task.objects.filter(created_by=self.request.user)
+        return Task.objects.filter(created_by=self.request.user, team_id=self.kwargs['team_id'])
 
     def perform_update(self, serializer):
-        team = get_object_or_404(Team, pk=self.kwargs['team_id'])
         task = self.get_object()
-        self.instance = TaskService.update_task(
+        TaskService.check_update_task_permission(
+            user=self.request.user,
             task=task,
-            team=team,
-            **serializer.validated_data
+            data=serializer.validated_data
         )
+        serializer.save()
 
 
 class TaskDeleteView(DestroyAPIView):
