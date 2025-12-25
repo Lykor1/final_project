@@ -1,8 +1,12 @@
 import pytest
 from django.utils import timezone
 
-from tasks.serializers import TaskCreateSerializer, TaskUpdateSerializer
-from tasks.models import Task
+from tasks.serializers import (
+    TaskCreateSerializer,
+    TaskUpdateSerializer,
+    CommentCreateSerializer
+)
+from tasks.models import Task, Comment
 
 
 @pytest.mark.serializers
@@ -144,3 +148,46 @@ class TestTaskUpdateSerializer:
         serializer = TaskUpdateSerializer(instance=self.task, data={'assigned_to': self.new_user}, partial=True)
         assert not serializer.is_valid()
         assert 'assigned_to' in serializer.errors
+
+
+@pytest.mark.serializers
+@pytest.mark.django_db
+class TestCommentCreateSerializer:
+    @pytest.fixture(autouse=True)
+    def setup(self, create_superuser, create_team, create_task, admin_user_data, team_data, task_data):
+        self.admin = create_superuser(**admin_user_data)
+        self.team = create_team(creator=self.admin, **team_data)
+        self.task = create_task(created_by=self.admin, team=self.team, **task_data)
+
+    def test_create_comment_success(self):
+        """
+        Тест на успешное создание комментария
+        """
+        serializer = CommentCreateSerializer(data={'text': 'test text'})
+        assert serializer.is_valid(), serializer.errors
+        assert set(serializer.data.keys()) == {'text'}
+        assert serializer.validated_data['text'] == 'test text'
+
+    def test_create_comment_without_text(self):
+        """
+        Тест на создание комментария без текста
+        """
+        serializer = CommentCreateSerializer(data={})
+        assert not serializer.is_valid()
+        assert 'text' in serializer.errors
+
+    @pytest.mark.parametrize(
+        'text, expected_text',
+        [
+            ('  test', 'test'),
+            ('test   ', 'test'),
+            ('  test  ', 'test'),
+        ]
+    )
+    def test_create_comment_validation_text(self, text, expected_text):
+        """
+        Тест на создание комментария с валидацией текста
+        """
+        serializer = CommentCreateSerializer(data={'text': text})
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data['text'] == expected_text
