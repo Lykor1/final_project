@@ -46,3 +46,10 @@ class CommentCreateSerializer(serializers.ModelSerializer):
 
     def validate_text(self, value):
         return value.strip()
+
+
+class CommentListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ('author', 'text')
+        read_only_fields = fields

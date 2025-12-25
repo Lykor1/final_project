@@ -4,7 +4,8 @@ from django.utils import timezone
 from tasks.serializers import (
     TaskCreateSerializer,
     TaskUpdateSerializer,
-    CommentCreateSerializer
+    CommentCreateSerializer,
+    CommentListSerializer
 )
 from tasks.models import Task, Comment
 
@@ -191,3 +192,28 @@ class TestCommentCreateSerializer:
         serializer = CommentCreateSerializer(data={'text': text})
         assert serializer.is_valid(), serializer.errors
         assert serializer.validated_data['text'] == expected_text
+
+
+@pytest.mark.serializers
+@pytest.mark.django_db
+class TestCommentListSerializer:
+    @pytest.fixture(autouse=True)
+    def setup(self, create_superuser, admin_user_data, team_data, create_team, task_data, create_task):
+        self.admin = create_superuser(**admin_user_data)
+        self.team = create_team(creator=self.admin, **team_data)
+        self.task = create_task(created_by=self.admin, team=self.team, **task_data)
+        self.comment = Comment.objects.create(
+            author=self.admin,
+            text='test',
+            task=self.task,
+        )
+
+    def test_list_comment_display_field(self):
+        """
+        Тест на отображаемые поля
+        """
+        serializer = CommentListSerializer(instance=self.comment)
+        expected_fields = {'author', 'text'}
+        assert set(serializer.data.keys()) == expected_fields
+        assert serializer.data['author'] == self.admin.id
+        assert serializer.data['text'] == 'test'
