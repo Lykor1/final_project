@@ -1,9 +1,9 @@
 import pytest
 from django.utils import timezone
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied
 
 from tasks.models import Task
-from tasks.services import TaskService
+from tasks.services import TaskService, CommentService
 
 
 @pytest.mark.services
@@ -36,10 +36,6 @@ class TestCreateTask:
 @pytest.mark.services
 @pytest.mark.django_db
 class TestUpdateTask:
-    """
-    - исполнитель не в команде
-    """
-
     @pytest.fixture(autouse=True)
     def setup(self, create_superuser, admin_user_data, team_data, create_team, create_task, task_data, create_user,
               user_data):
@@ -82,3 +78,36 @@ class TestUpdateTask:
         self.user.save()
         with pytest.raises(ValidationError):
             TaskService.update_task(task=self.task, team=self.team, **self.new_task_data)
+
+
+@pytest.mark.services
+@pytest.mark.django_db
+class TestCheckCreateCommentPermission:
+    @pytest.fixture(autouse=True)
+    def setup(self, create_superuser, admin_user_data, create_team, team_data, user_data, create_user, create_task,
+              task_data):
+        self.admin = create_superuser(**admin_user_data)
+        team = create_team(creator=self.admin, **team_data)
+        self.user = create_user(team=team, **user_data)
+        self.task = create_task(team=team, created_by=self.admin, **task_data)
+
+    def test_create_comment_team_creator_success(self):
+        """
+        Тест на успешное создание комментария создателем команды
+        """
+        CommentService.check_create_comment_permission(current_user=self.admin, task=self.task)
+
+    def test_create_comment_team_members_success(self):
+        """
+        Тест на успешное создание комментария участником команды
+        """
+        CommentService.check_create_comment_permission(current_user=self.user, task=self.task)
+
+    def test_create_comment_not_team_members(self):
+        """
+        Тест на создание комментария не участником команды
+        """
+        self.user.team = None
+        self.user.save()
+        with pytest.raises(PermissionDenied):
+            CommentService.check_create_comment_permission(current_user=self.user, task=self.task)

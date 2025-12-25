@@ -2,7 +2,7 @@ import pytest
 from django.urls import reverse
 from django.utils import timezone
 
-from tasks.models import Task
+from tasks.models import Task, Comment
 
 
 @pytest.mark.views
@@ -325,4 +325,80 @@ class TestTaskDeleteView:
         Тест на удаление задачи анонимным пользователем
         """
         response = self.client.delete(self.url)
+        assert response.status_code == 401
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestCommentCreateView:
+    @pytest.fixture(autouse=True)
+    def setup(self, client, create_superuser, admin_user_data, create_team, team_data, create_user, user_data,
+              create_task, task_data):
+        self.admin = create_superuser(**admin_user_data)
+        team = create_team(creator=self.admin, **team_data)
+        self.user = create_user(team=team, **user_data)
+        self.task = create_task(created_by=self.admin, team=team, **task_data)
+        self.client = client
+        self.url = reverse('tasks:add-comment', kwargs={'task_id': self.task.id})
+
+    def test_create_comment_team_creator_success(self):
+        """
+        Тест на успешное создание комментария создателем команды
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.post(self.url, data={'text': 'test'})
+        assert response.status_code == 201
+        assert response.data['text'] == 'test'
+        assert Comment.objects.count() == 1
+        comment = Comment.objects.first()
+        assert comment.author == self.admin
+        assert comment.task == self.task
+
+    def test_create_comment_team_members_success(self):
+        """
+        Тест на успешное создание комментария участником команды
+        """
+        self.client.force_authenticate(self.user)
+        response = self.client.post(self.url, data={'text': 'test'})
+        assert response.status_code == 201
+        assert response.data['text'] == 'test'
+        assert Comment.objects.count() == 1
+        comment = Comment.objects.first()
+        assert comment.author == self.user
+        assert comment.task == self.task
+
+    def test_create_comment_without_text(self):
+        """
+        Тест на создание комментария без текста
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.post(self.url, data={})
+        assert response.status_code == 400
+        assert 'text' in response.data
+
+    def test_create_comment_not_team_members(self):
+        """
+        Тест на создание комментария не участником команды
+        """
+        self.user.team = None
+        self.user.save()
+        self.client.force_authenticate(self.user)
+        response = self.client.post(self.url, data={'text': 'test'})
+        assert response.status_code == 403
+        assert 'Комментировать может только создатель команды или её участники' in str(response.data)
+
+    def test_create_comment_not_task(self):
+        """
+        Тест на создание комментария для несуществующей задачи
+        """
+        url = reverse('tasks:add-comment', kwargs={'task_id': 999})
+        self.client.force_authenticate(self.user)
+        response = self.client.post(url, data={'text': 'test'})
+        assert response.status_code == 404
+
+    def test_create_comment_unauthenticated_user(self):
+        """
+        Тест на создание комментария анонимным пользователем
+        """
+        response = self.client.post(self.url, data={'text': 'test'})
         assert response.status_code == 401

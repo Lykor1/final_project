@@ -45,5 +45,5 @@ class CommentService:
         Создание комментария
         """
         team = task.team
-        if not team.creator == current_user or team.members.filter(id=current_user.id).exists():
+        if not (team.creator == current_user or team.members.filter(id=current_user.id).exists()):
             raise PermissionDenied({'author': 'Комментировать может только создатель команды или её участники'})
