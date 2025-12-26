@@ -407,11 +407,6 @@ class TestCommentCreateView:
 @pytest.mark.views
 @pytest.mark.django_db
 class TestTaskListOwnView:
-    """
-    - пользователь не в команде
-    - аноним
-    """
-
     @pytest.fixture(autouse=True)
     def setup(self, create_superuser, admin_user_data, create_team, team_data, create_task, task_data, create_user,
               user_data, client):
@@ -462,6 +457,80 @@ class TestTaskListOwnView:
     def test_list_task_own_unauthenticated_user(self):
         """
         Тест на просмотр списка задач анонимным пользователем
+        """
+        response = self.client.get(self.url)
+        assert response.status_code == 401
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestTaskListAdminView:
+    @pytest.fixture(autouse=True)
+    def setup(self, create_superuser, admin_user_data, create_team, team_data, create_task, task_data, create_user,
+              user_data, client):
+        self.admin = create_superuser(**admin_user_data)
+        self.team = create_team(creator=self.admin, **team_data)
+        self.user = create_user(team=self.team, **user_data)
+        self.tasks = []
+        for i in range(3):
+            self.tasks.append(create_task(created_by=self.admin, team=self.team, assigned_to=self.user, **task_data))
+        self.comments = []
+        for t in self.tasks:
+            for i in range(2):
+                self.comments.append(Comment.objects.create(author=self.admin, task=t, text=f'test {i}'))
+        self.client = client
+        self.url = reverse('tasks:admin-list')
+
+    def test_list_task_admin_success(self, task_data):
+        """
+        Тест на успешный просмотр списка задач админа
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.get(self.url)
+        assert response.status_code == 200
+        assert len(response.data) == len(self.tasks)
+        assert response.data[0]['title'] == task_data['title']
+        assert response.data[1]['assigned_to'] == self.user.id
+        assert response.data[2]['team'] == self.team.id
+
+    def test_list_task_admin_comments(self):
+        """
+        Тест на успешное получение списка комментариев в списке задач админа
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.get(self.url)
+        assert response.status_code == 200
+        assert len(response.data[0]['comments']) == len(self.comments) / len(self.tasks)
+        assert response.data[0]['comments'][0]['author'] == self.admin.id
+        assert response.data[1]['comments'][-1]['text'] == 'test 0'
+
+    def test_list_task_admin_not_tasks(self, create_superuser, admin_user_data):
+        """
+        Тест на получение списка задач админа без задач
+        """
+        new_admin = create_superuser(
+            email='newadmin@example.com',
+            password=admin_user_data['password'],
+            first_name=admin_user_data['first_name'],
+            last_name=admin_user_data['last_name'],
+        )
+        self.client.force_authenticate(new_admin)
+        response = self.client.get(self.url)
+        assert response.status_code == 200
+        assert len(response.data) == 0
+        assert response.data == []
+
+    def test_list_task_admin_not_admin(self):
+        """
+        Тест на просмотр списка задач админа не админом
+        """
+        self.client.force_authenticate(self.user)
+        response = self.client.get(self.url)
+        assert response.status_code == 403
+
+    def test_list_task_admin_unauthenticated_user(self):
+        """
+        Тест на просмотр списка задач админа анонимным пользователем
         """
         response = self.client.get(self.url)
         assert response.status_code == 401
