@@ -402,3 +402,66 @@ class TestCommentCreateView:
         """
         response = self.client.post(self.url, data={'text': 'test'})
         assert response.status_code == 401
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestTaskListOwnView:
+    """
+    - пользователь не в команде
+    - аноним
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self, create_superuser, admin_user_data, create_team, team_data, create_task, task_data, create_user,
+              user_data, client):
+        self.admin = create_superuser(**admin_user_data)
+        self.team = create_team(creator=self.admin, **team_data)
+        self.user = create_user(team=self.team, **user_data)
+        self.tasks = []
+        for i in range(3):
+            self.tasks.append(create_task(created_by=self.admin, team=self.team, assigned_to=self.user, **task_data))
+        self.comments = []
+        for t in self.tasks:
+            for i in range(2):
+                self.comments.append(Comment.objects.create(author=self.user, task=t, text=f'test {i}'))
+        self.client = client
+        self.url = reverse('tasks:own-list')
+
+    def test_list_task_own_success(self, task_data):
+        """
+        Тест на успешное получение списка задач исполнителя
+        """
+        self.client.force_authenticate(self.user)
+        response = self.client.get(self.url)
+        assert response.status_code == 200
+        assert len(response.data) == len(self.tasks)
+        assert response.data[0]['title'] == task_data['title']
+        assert response.data[1]['created_by'] == self.admin.id
+
+    def test_list_task_own_comments(self):
+        """
+        Тест на успешное получение списка комментариев в списке задач исполнителя
+        """
+        self.client.force_authenticate(self.user)
+        response = self.client.get(self.url)
+        assert response.status_code == 200
+        assert len(response.data[0]['comments']) == len(self.comments) / len(self.tasks)
+        assert response.data[0]['comments'][0]['author'] == self.user.id
+        assert response.data[1]['comments'][-1]['text'] == 'test 0'
+
+    def test_list_task_own_not_tasks(self):
+        """
+        Тест на просмотр списка задач исполнителем без задач
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.get(self.url)
+        assert response.status_code == 200
+        assert response.data == []
+
+    def test_list_task_own_unauthenticated_user(self):
+        """
+        Тест на просмотр списка задач анонимным пользователем
+        """
+        response = self.client.get(self.url)
+        assert response.status_code == 401
