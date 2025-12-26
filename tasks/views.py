@@ -2,13 +2,20 @@ from django.shortcuts import get_object_or_404
 from rest_framework.generics import (
     CreateAPIView,
     UpdateAPIView,
-    DestroyAPIView
+    DestroyAPIView,
+    ListAPIView
 )
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from teams.models import Team
 from .models import Task, Comment
-from .serializers import TaskCreateSerializer, TaskUpdateSerializer, CommentCreateSerializer
+from .serializers import (
+    TaskCreateSerializer,
+    TaskUpdateSerializer,
+    CommentCreateSerializer,
+    TaskListUserSerializer,
+    TaskListAdminSerializer
+)
 from .services import TaskService, CommentService
 
 
@@ -83,3 +90,14 @@ class CommentCreateView(CreateAPIView):
             task=task,
             author=user
         )
+
+
+class TaskListOwnView(ListAPIView):
+    """
+    Просмотр списка своих задач
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = TaskListUserSerializer
+
+    def get_queryset(self):
+        return Task.objects.filter(assigned_to=self.request.user)

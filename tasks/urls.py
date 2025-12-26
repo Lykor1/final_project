@@ -8,4 +8,5 @@ urlpatterns = [
     path('<int:team_id>/update/<int:pk>/', views.TaskUpdateView.as_view(), name='update'),
     path('<int:team_id>/delete/<int:pk>/', views.TaskDeleteView.as_view(), name='delete'),
     path('<int:task_id>/add/', views.CommentCreateView.as_view(), name='add-comment'),
+    path('own-list/', views.TaskListOwnView.as_view(), name='own-list'),
 ]
