@@ -101,3 +101,14 @@ class TaskListOwnView(ListAPIView):
 
     def get_queryset(self):
         return Task.objects.filter(assigned_to=self.request.user)
+
+
+class TaskListAdminView(ListAPIView):
+    """
+    Просмотр списка задач админом
+    """
+    permission_classes = (IsAdminUser,)
+    serializer_class = TaskListAdminSerializer
+
+    def get_queryset(self):
+        return Task.objects.filter(created_by=self.request.user)
