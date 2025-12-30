@@ -18,3 +18,7 @@ class Evaluation(models.Model):
 
     def __str__(self):
         return f'{self.task.title} ({self.task.assigned_to}): {self.rank}'
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
