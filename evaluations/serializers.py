@@ -7,4 +7,3 @@ class EvaluationCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Evaluation
         fields = ('rank',)
-        read_only_fields = fields
