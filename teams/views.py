@@ -27,8 +27,6 @@ from .services import TeamService
 User = get_user_model()
 
 
-# TODO: отрефакторить с использованием only
-
 class TeamCreateAPIView(CreateAPIView):
     """
     Создание команды админом
@@ -120,12 +118,13 @@ class CurrentTeamDetailView(RetrieveAPIView):
     """
     permission_classes = (IsAuthenticated,)
     serializer_class = TeamDetailSerializer
+    queryset = Team.objects.select_related('creator').prefetch_related('members')
 
     def get_object(self):
         current_user = self.request.user
-        if not current_user.team:
+        if not current_user.team_id:
             raise NotFound('Вы не состоите в команде')
-        return current_user.team
+        return self.get_queryset().get(id=current_user.team_id)
 
 
 class TeamUpdateView(UpdateAPIView):
@@ -147,4 +146,4 @@ class TeamListView(ListAPIView):
     serializer_class = TeamListSerializer
 
     def get_queryset(self):
-        return Team.objects.filter(creator=self.request.user)
+        return Team.objects.select_related('creator').prefetch_related('members').filter(creator=self.request.user)

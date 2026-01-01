@@ -118,5 +118,3 @@ class UserDeleteView(APIView):
             {'detail': str_user},
             status=status.HTTP_200_OK
         )
-
-# TODO: добавить пользователю просмотр его оценок и средней оценки за все задачи
