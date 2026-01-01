@@ -3,11 +3,22 @@ from rest_framework.exceptions import ValidationError, PermissionDenied
 
 from tasks.models import Task
 from evaluations.services import EvaluationService
+from evaluations.models import Evaluation
+
+
+@pytest.fixture(autouse=True)
+def setup(self, admin_user_data, create_superuser, task_data, create_task, team_data, create_team, user_data,
+          create_user):
+    self.admin = create_superuser(**admin_user_data)
+    team = create_team(creator=self.admin, **team_data)
+    self.user = create_user(**user_data)
+    task_data.update({'status': 'done'})
+    self.task = create_task(created_by=self.admin, team=team, assigned_to=self.user, **task_data)
 
 
 @pytest.mark.services
 @pytest.mark.django_db
-class TestCheckEvaluationPermission:
+class TestCheckCreateEvaluationPermission:
     @pytest.fixture(autouse=True)
     def setup(self, admin_user_data, create_superuser, task_data, create_task, team_data, create_team, user_data,
               create_user):
@@ -38,3 +49,30 @@ class TestCheckEvaluationPermission:
         self.task.save()
         with pytest.raises(ValidationError):
             EvaluationService.check_create_evaluation_permission(task=self.task, current_user=self.admin)
+
+
+@pytest.mark.services
+@pytest.mark.django_db
+class TestCheckDeleteEvaluationPermission:
+    @pytest.fixture(autouse=True)
+    def setup(self, admin_user_data, create_superuser, task_data, create_task, team_data, create_team, user_data,
+              create_user):
+        self.admin = create_superuser(**admin_user_data)
+        team = create_team(creator=self.admin, **team_data)
+        self.user = create_user(**user_data)
+        task_data.update({'status': 'done'})
+        self.task = create_task(created_by=self.admin, team=team, assigned_to=self.user, **task_data)
+        self.eval = Evaluation.objects.create(task=self.task, rank=5)
+
+    def test_delete_evaluation_permission_success(self):
+        """
+        Тест на успешную проверку прав для удаления
+        """
+        EvaluationService.check_delete_evaluation_permission(task=self.task, current_user=self.admin)
+
+    def test_delete_evaluation_permission_not_created_by(self):
+        """
+        Тест на проверку прав для удаления не создателю команды
+        """
+        with pytest.raises(PermissionDenied):
+            EvaluationService.check_delete_evaluation_permission(task=self.task, current_user=self.user)
