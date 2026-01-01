@@ -13,7 +13,7 @@ class TaskService:
         """
         if not team.creator == created_by:
             raise PermissionDenied({'created_by': 'Создавать задачи может только создатель команды'})
-        if assigned_to is not None and not team.members.filter(id=assigned_to.id).exists():
+        if assigned_to is not None and assigned_to.team_id != team.id:
             raise ValidationError({'assigned_to': 'Исполнитель должен быть в составе команды'})
 
     @staticmethod
@@ -21,11 +21,11 @@ class TaskService:
         """
         Проверка прав для обновления задачи
         """
-        if task.created_by != user:
+        if task.created_by.id != user.id:
             raise PermissionDenied({'created_by': 'Обновлять задачу может только создатель задачи'})
         if 'assigned_to' in data:
             assigned_to = data['assigned_to']
-            if assigned_to is not None and not task.team.members.filter(id=assigned_to.id).exists():
+            if assigned_to is not None and assigned_to.team_id != task.team_id:
                 raise ValidationError({'assigned_to': 'Исполнитель должен быть в составе команды'})
 
     @staticmethod
@@ -42,5 +42,5 @@ class CommentService:
         Проверка прав для создания комментария
         """
         team = task.team
-        if not (team.creator == current_user or team.members.filter(id=current_user.id).exists()):
+        if not (team.creator_id == current_user.id or team.id == current_user.team_id):
             raise PermissionDenied({'author': 'Комментировать может только создатель команды или её участники'})

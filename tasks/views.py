@@ -1,3 +1,4 @@
+from django.db.models import F, Prefetch
 from django.shortcuts import get_object_or_404
 from rest_framework.generics import (
     CreateAPIView,
@@ -6,7 +7,6 @@ from rest_framework.generics import (
     ListAPIView
 )
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
-from django.db.models import F
 
 from teams.models import Team
 from .models import Task, Comment
@@ -19,8 +19,6 @@ from .serializers import (
 )
 from .services import TaskService, CommentService
 
-
-# TODO: отрефакторить с использованием only
 
 class TaskCreateView(CreateAPIView):
     """
@@ -49,13 +47,12 @@ class TaskUpdateView(UpdateAPIView):
     """
     permission_classes = (IsAdminUser,)
     serializer_class = TaskUpdateSerializer
-    queryset = Task.objects.all()
 
     def get_queryset(self):
         return Task.objects.filter(created_by=self.request.user, team_id=self.kwargs['team_id'])
 
     def perform_update(self, serializer):
-        task = self.get_object()
+        task = serializer.instance
         TaskService.check_update_task_permission(
             user=self.request.user,
             task=task,
@@ -85,7 +82,7 @@ class CommentCreateView(CreateAPIView):
 
     def perform_create(self, serializer):
         user = self.request.user
-        task = get_object_or_404(Task, pk=self.kwargs['task_id'])
+        task = get_object_or_404(Task.objects.select_related('team'), pk=self.kwargs['task_id'])
         CommentService.check_create_comment_permission(
             current_user=user,
             task=task,
@@ -104,10 +101,27 @@ class TaskListOwnView(ListAPIView):
     serializer_class = TaskListUserSerializer
 
     def get_queryset(self):
-        return Task.objects.filter(
-            assigned_to=self.request.user
-        ).select_related('created_by', 'assigned_to', 'team').annotate(
-            rank=F('task_evaluation__rank')
+        return (
+            Task.objects.filter(assigned_to=self.request.user)
+            .select_related('created_by')
+            .prefetch_related(
+                Prefetch
+                    (
+                    'tasks',
+                    queryset=Comment.objects.only('id', 'text', 'author').select_related('author')
+                )
+            )
+            .annotate(rank=F('task_evaluation__rank'))
+            .only(
+                'id',
+                'title',
+                'description',
+                'deadline',
+                'status',
+                'created_by',
+                'created_at',
+                'updated_at',
+            )
         )
 
 
@@ -119,4 +133,24 @@ class TaskListAdminView(ListAPIView):
     serializer_class = TaskListAdminSerializer
 
     def get_queryset(self):
-        return Task.objects.filter(created_by=self.request.user)
+        return (
+            Task.objects.filter(created_by=self.request.user)
+            .select_related('assigned_to', 'team')
+            .prefetch_related(
+                Prefetch(
+                    'tasks',
+                    queryset=Comment.objects.only('id', 'text', 'author').select_related('author')
+                )
+            )
+            .only(
+                'id',
+                'title',
+                'description',
+                'deadline',
+                'status',
+                'assigned_to',
+                'team',
+                'created_at',
+                'updated_at'
+            )
+        )
