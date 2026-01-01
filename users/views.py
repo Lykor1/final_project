@@ -1,3 +1,5 @@
+from django.contrib.auth import get_user_model
+from rest_framework import status
 from rest_framework.generics import (
     CreateAPIView,
     RetrieveAPIView,
@@ -5,15 +7,11 @@ from rest_framework.generics import (
     UpdateAPIView,
     get_object_or_404
 )
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
-from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.tokens import (
-    RefreshToken,
-    TokenError,
-)
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import TokenError
+from django.db.models import Q, Avg
 
 from .serializers import (
     UserRegisterSerializer,
@@ -64,8 +62,20 @@ class UserDetailView(RetrieveAPIView):
     """
     permission_classes = (IsAuthenticated,)
     serializer_class = UserDetailSerializer
-    queryset = User.objects.select_related('team').only('email', 'first_name', 'last_name', 'birthday', 'role',
-                                                        'team', 'created_at')
+    queryset = User.objects.select_related('team').annotate(
+        average_rank=Avg(
+            'assigned_tasks__task_evaluation__rank',
+            filter=Q(assigned_tasks__status='done')
+        )
+    ).only(
+        'email',
+        'first_name',
+        'last_name',
+        'birthday',
+        'role',
+        'team',
+        'created_at'
+    )
 
     def get_object(self):
         return self.request.user

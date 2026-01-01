@@ -38,6 +38,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     team_name = serializers.SerializerMethodField()
     age = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
+    average_rank = serializers.FloatField(read_only=True)
 
     class Meta:
         model = User
@@ -48,6 +49,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
             'age',
             'role',
             'team_name',
+            'average_rank',
             'created_at'
         )
         read_only_fields = fields
