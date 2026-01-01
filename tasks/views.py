@@ -19,6 +19,8 @@ from .serializers import (
 from .services import TaskService, CommentService
 
 
+# TODO: отрефакторить с использованием only
+
 class TaskCreateView(CreateAPIView):
     """
     Создание задачи
@@ -58,6 +60,7 @@ class TaskUpdateView(UpdateAPIView):
             task=task,
             data=serializer.validated_data
         )
+        TaskService.check_task_status(task=task, data=serializer.validated_data)
         serializer.save()
 
 

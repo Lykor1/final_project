@@ -1,6 +1,9 @@
 from django.db import transaction
 from rest_framework.exceptions import ValidationError, PermissionDenied
 
+from .models import Task
+from evaluations.models import Evaluation
+
 
 class TaskService:
     @staticmethod
@@ -24,6 +27,12 @@ class TaskService:
             assigned_to = data['assigned_to']
             if assigned_to is not None and not task.team.members.filter(id=assigned_to.id).exists():
                 raise ValidationError({'assigned_to': 'Исполнитель должен быть в составе команды'})
+
+    @staticmethod
+    def check_task_status(*, task, data):
+        if 'status' in data:
+            if task.status == Task.Status.DONE and data['status'] != Task.Status.DONE:
+                Evaluation.objects.filter(task=task).delete()
 
 
 class CommentService:

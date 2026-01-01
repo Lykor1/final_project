@@ -27,6 +27,8 @@ from .services import TeamService
 User = get_user_model()
 
 
+# TODO: отрефакторить с использованием only
+
 class TeamCreateAPIView(CreateAPIView):
     """
     Создание команды админом
