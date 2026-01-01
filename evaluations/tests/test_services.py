@@ -6,16 +6,6 @@ from evaluations.services import EvaluationService
 from evaluations.models import Evaluation
 
 
-@pytest.fixture(autouse=True)
-def setup(self, admin_user_data, create_superuser, task_data, create_task, team_data, create_team, user_data,
-          create_user):
-    self.admin = create_superuser(**admin_user_data)
-    team = create_team(creator=self.admin, **team_data)
-    self.user = create_user(**user_data)
-    task_data.update({'status': 'done'})
-    self.task = create_task(created_by=self.admin, team=team, assigned_to=self.user, **task_data)
-
-
 @pytest.mark.services
 @pytest.mark.django_db
 class TestCheckCreateEvaluationPermission:
