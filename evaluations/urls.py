@@ -5,4 +5,5 @@ from . import views
 app_name = 'evaluations'
 urlpatterns = [
     path('<int:task_id>/create/', views.EvaluationCreateView.as_view(), name='create'),
+    path('<int:task_id>/delete/', views.EvaluationDeleteView.as_view(), name='delete'),
 ]
