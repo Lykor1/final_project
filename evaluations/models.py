@@ -15,6 +15,9 @@ class Evaluation(models.Model):
         verbose_name = 'Оценка'
         verbose_name_plural = 'Оценки'
         ordering = ['task']
+        constraints = [
+            models.UniqueConstraint(fields=['task'], name='unique_task_eval')
+        ]
 
     def __str__(self):
         return f'{self.task.title} ({self.task.assigned_to}): {self.rank}'

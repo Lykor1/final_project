@@ -70,3 +70,12 @@ class TestEvaluationModel:
         """
         fields = Evaluation._meta.ordering
         assert fields == ['task']
+
+    def test_create_evaluation_double(self):
+        """
+        Тест на уникальность оценки для задачи
+        """
+        eval1 = Evaluation.objects.create(**self.eval_data)
+        assert eval1.pk is not None
+        with pytest.raises(ValidationError):
+            Evaluation.objects.create(**self.eval_data)
