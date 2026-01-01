@@ -3,6 +3,7 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError, PermissionDenied
 
 from tasks.services import TaskService, CommentService
+from evaluations.models import Evaluation
 
 
 @pytest.mark.services
@@ -81,6 +82,51 @@ class TestCheckUpdateTaskPermission:
         """
         with pytest.raises(PermissionDenied):
             TaskService.check_update_task_permission(user=self.user, task=self.task, data=self.new_task_data)
+
+
+@pytest.mark.services
+@pytest.mark.django_db
+class TestCheckTaskStatus:
+    @pytest.fixture(autouse=True)
+    def setup(self, create_superuser, admin_user_data, team_data, create_team, task_data, create_task):
+        self.admin = create_superuser(**admin_user_data)
+        team = create_team(creator=self.admin, **team_data)
+        task_data.update({'status': 'done'})
+        self.task = create_task(created_by=self.admin, team=team, assigned_to=self.admin, **task_data)
+        self.eval = Evaluation.objects.create(task=self.task, rank=5)
+
+    def test_delete_eval_update_task_status_success(self):
+        """
+        Тест на успешное удаление оценки при изменении статуса выполненной задачи
+        """
+        assert Evaluation.objects.count() == 1
+        TaskService.check_task_status(task=self.task, data={'status': 'open'})
+        assert Evaluation.objects.count() == 0
+
+    def test_delete_eval_update_task_status_not_change(self):
+        """
+        Тест на удаление оценки при изменении статуса выполненной задачи
+        """
+        assert Evaluation.objects.count() == 1
+        TaskService.check_task_status(task=self.task, data={'status': 'done'})
+        assert Evaluation.objects.count() == 1
+
+    def test_delete_eval_update_task_status_without_status(self):
+        """
+        Тест на удаление оценки при изменении статуса выполненной задачи без изменения статуса
+        """
+        assert Evaluation.objects.count() == 1
+        TaskService.check_task_status(task=self.task, data={})
+        assert Evaluation.objects.count() == 1
+
+    def test_delete_eval_update_task_status_without_eval(self):
+        """
+        Тест на удаление оценки при изменении статуса выполненной задачи без оценки
+        """
+        Evaluation.objects.all().delete()
+        assert Evaluation.objects.count() == 0
+        TaskService.check_task_status(task=self.task, data={'status': 'open'})
+        assert Evaluation.objects.count() == 0
 
 
 @pytest.mark.services
