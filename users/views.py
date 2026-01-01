@@ -78,7 +78,7 @@ class UserDetailView(RetrieveAPIView):
     )
 
     def get_object(self):
-        return self.request.user
+        return self.get_queryset().get(pk=self.request.user.pk)
 
 
 class UserListView(ListAPIView):

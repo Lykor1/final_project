@@ -266,7 +266,7 @@ class TestUserDetailView:
         self.client.force_authenticate(self.user)
         response = self.client.get(self.url)
         assert response.status_code == 200
-        expected_fields = {'email', 'full_name', 'birthday', 'age', 'role', 'team_name', 'created_at'}
+        expected_fields = {'email', 'full_name', 'birthday', 'age', 'role', 'team_name', 'average_rank', 'created_at'}
         assert set(response.data.keys()) == expected_fields
         assert response.data['email'] == self.user.email
         assert response.data['full_name'] == f'{self.user.first_name} {self.user.last_name}'
@@ -300,11 +300,6 @@ class TestUserDetailView:
 @pytest.mark.views
 @pytest.mark.django_db
 class TestUserListView:
-    """
-    - анонимный пользователь
-    - не админ
-    """
-
     @pytest.fixture(autouse=True)
     def setup(self, client, create_user, user_data, team, admin_user):
         self.url = reverse('users:list')
@@ -358,10 +353,6 @@ class TestUserListView:
 @pytest.mark.views
 @pytest.mark.django_db
 class TestUserUpdateView:
-    """
-    - полное/частичное обновление
-    """
-
     @pytest.fixture(autouse=True)
     def setup(self, client, create_user, user_data):
         self.url = reverse('users:update')
