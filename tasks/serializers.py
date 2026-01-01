@@ -57,10 +57,11 @@ class CommentListSerializer(serializers.ModelSerializer):
 
 class TaskListUserSerializer(serializers.ModelSerializer):
     comments = CommentListSerializer(read_only=True, many=True, source='tasks')
+    rank = serializers.IntegerField(read_only=True, allow_null=True)
 
     class Meta:
         model = Task
-        fields = ('title', 'description', 'deadline', 'status', 'created_by', 'created_at', 'updated_at', 'comments')
+        fields = ('title', 'description', 'deadline', 'status', 'created_by', 'rank', 'created_at', 'updated_at', 'comments')
         read_only_fields = fields
 
 

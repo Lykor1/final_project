@@ -6,6 +6,7 @@ from rest_framework.generics import (
     ListAPIView
 )
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from django.db.models import F
 
 from teams.models import Team
 from .models import Task, Comment
@@ -103,7 +104,11 @@ class TaskListOwnView(ListAPIView):
     serializer_class = TaskListUserSerializer
 
     def get_queryset(self):
-        return Task.objects.filter(assigned_to=self.request.user)
+        return Task.objects.filter(
+            assigned_to=self.request.user
+        ).select_related('created_by', 'assigned_to', 'team').annotate(
+            rank=F('task_evaluation__rank')
+        )
 
 
 class TaskListAdminView(ListAPIView):

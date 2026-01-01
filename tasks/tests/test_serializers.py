@@ -248,8 +248,8 @@ class TestTaskListUserSerializer:
         Тест на отображение полей
         """
         serializer = create_serializer
-        expected_fields = {'title', 'description', 'deadline', 'status', 'created_by', 'created_at', 'updated_at',
-                           'comments'}
+        expected_fields = {'title', 'description', 'deadline', 'status', 'created_by', 'rank', 'created_at',
+                           'updated_at', 'comments'}
         assert set(serializer.data.keys()) == expected_fields
 
     def test_list_task_correct_info(self, create_serializer):
