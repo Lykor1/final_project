@@ -35,7 +35,7 @@ class Meeting(models.Model):
         current_time = now.time()
         if self.date < current_date:
             raise ValidationError({'date': 'Нельзя создать встречу в прошлом'})
-        if self.date == current_date and self.start_time < current_time:
+        if self.start_time < current_time:
             raise ValidationError({'start_time': 'Время начала встречи не может быть в прошлом'})
         if self.end_time <= self.start_time:
             raise ValidationError({'end_time': 'Время окончания встречи должно быть позже времени начала'})
