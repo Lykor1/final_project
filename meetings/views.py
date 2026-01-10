@@ -8,6 +8,9 @@ from .services import MeetingService
 
 
 class MeetingCreateView(CreateAPIView):
+    """
+    Создание встречи
+    """
     permission_classes = (IsAdminUser,)
     serializer_class = MeetingCreateSerializer
 
