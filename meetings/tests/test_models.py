@@ -1,6 +1,7 @@
 import pytest
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from datetime import time
 
 from meetings.models import Meeting, get_full_datetime
 
@@ -8,21 +9,11 @@ from meetings.models import Meeting, get_full_datetime
 @pytest.mark.models
 @pytest.mark.django_db
 class TestMeetingModel:
-    """
-    - str
-    - ordering
-    """
-
     @pytest.fixture(autouse=True)
-    def setup(self, create_superuser, admin_user_data):
+    def setup(self, create_superuser, admin_user_data, meeting_data):
         self.admin = create_superuser(**admin_user_data)
-        self.meeting_data = {
-            'topic': 'test topic',
-            'date': timezone.now().date() + timezone.timedelta(days=2),
-            'start_time': (timezone.now() + timezone.timedelta(hours=5)).time(),
-            'end_time': (timezone.now() + timezone.timedelta(hours=6)).time(),
-            'creator': self.admin,
-        }
+        meeting_data.update({'creator': self.admin})
+        self.meeting_data = meeting_data
 
     def test_create_meeting(self):
         """
@@ -61,12 +52,8 @@ class TestMeetingModel:
     @pytest.mark.parametrize(
         'date, start_time, end_time, expected',
         [
-            (timezone.now().date() - timezone.timedelta(days=2), (timezone.now() + timezone.timedelta(hours=5)).time(),
-             (timezone.now() + timezone.timedelta(hours=6)).time(), 'date'),
-            (timezone.now().date() + timezone.timedelta(days=2), (timezone.now() - timezone.timedelta(hours=5)).time(),
-             (timezone.now() + timezone.timedelta(hours=6)).time(), 'start_time'),
-            (timezone.now().date() + timezone.timedelta(days=2), (timezone.now() + timezone.timedelta(hours=5)).time(),
-             (timezone.now() - timezone.timedelta(hours=6)).time(), 'end_time'),
+            (timezone.now().date() - timezone.timedelta(days=2), time(10, 0),time(11,0),  'start_time'),
+            (timezone.now().date() + timezone.timedelta(days=2), time(18, 0),time(9,0), 'end_time'),
         ]
     )
     def test_invalid_date_and_time(self, date, start_time, end_time, expected):
@@ -76,7 +63,7 @@ class TestMeetingModel:
         self.meeting_data.update({'date': date, 'start_time': start_time, 'end_time': end_time})
         with pytest.raises(ValidationError) as e:
             Meeting.objects.create(**self.meeting_data)
-            assert expected in e
+        assert expected in e.value.message_dict
 
     def test_full_start_time_and_end_time(self):
         """

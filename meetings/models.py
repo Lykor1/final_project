@@ -28,22 +28,6 @@ class Meeting(models.Model):
     def __str__(self):
         return f'{self.topic} ({self.date} {self.start_time} - {self.end_time})'
 
-    def clean(self):
-        super().clean()
-        now = timezone.now()
-        current_date = now.date()
-        current_time = now.time()
-        if self.date < current_date:
-            raise ValidationError({'date': 'Нельзя создать встречу в прошлом'})
-        if self.start_time < current_time:
-            raise ValidationError({'start_time': 'Время начала встречи не может быть в прошлом'})
-        if self.end_time <= self.start_time:
-            raise ValidationError({'end_time': 'Время окончания встречи должно быть позже времени начала'})
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
     @property
     def full_start_time(self):
         return get_full_datetime(self.date, self.start_time)
@@ -51,3 +35,25 @@ class Meeting(models.Model):
     @property
     def full_end_time(self):
         return get_full_datetime(self.date, self.end_time)
+
+    def clean(self):
+        super().clean()
+        now = timezone.now()
+        # current_date = now.date()
+        # current_time = now.time()
+        # if self.date < current_date:
+        #     raise ValidationError({'date': 'Нельзя создать встречу в прошлом'})
+        # if self.start_time < current_time:
+        #     raise ValidationError({'start_time': 'Время начала встречи не может быть в прошлом'})
+        # if self.end_time <= self.start_time:
+        #     raise ValidationError({'end_time': 'Время окончания встречи должно быть позже времени начала'})
+        start_dt = self.full_start_time
+        end_dt = self.full_end_time
+        if start_dt < now:
+            raise ValidationError({'start_time': 'Время начала встречи не может быть в прошлом'})
+        if end_dt <= start_dt:
+            raise ValidationError({'end_time': 'Время окончания встречи должно быть позже времени начала'})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)

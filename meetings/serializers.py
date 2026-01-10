@@ -6,7 +6,7 @@ from meetings.models import Meeting
 User = get_user_model()
 
 
-class MeetingSerializer(serializers.ModelSerializer):
+class MeetingCreateSerializer(serializers.ModelSerializer):
     members = serializers.SlugRelatedField(
         many=True,
         slug_field='email',
