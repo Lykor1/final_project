@@ -4,18 +4,6 @@ from rest_framework.exceptions import ValidationError
 
 from meetings.models import Meeting
 
-
-def has_time_conflict(*, user, date, start_time, end_time):
-    return Meeting.objects.filter(
-        date=date
-    ).filter(
-        Q(start_time__lt=end_time) &
-        Q(end_time__gt=start_time)
-    ).filter(
-        Q(creator=user) | Q(members=user)
-    ).exists()
-
-
 class MeetingService:
     @staticmethod
     @transaction.atomic
