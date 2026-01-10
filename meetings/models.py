@@ -39,14 +39,6 @@ class Meeting(models.Model):
     def clean(self):
         super().clean()
         now = timezone.now()
-        # current_date = now.date()
-        # current_time = now.time()
-        # if self.date < current_date:
-        #     raise ValidationError({'date': 'Нельзя создать встречу в прошлом'})
-        # if self.start_time < current_time:
-        #     raise ValidationError({'start_time': 'Время начала встречи не может быть в прошлом'})
-        # if self.end_time <= self.start_time:
-        #     raise ValidationError({'end_time': 'Время окончания встречи должно быть позже времени начала'})
         start_dt = self.full_start_time
         end_dt = self.full_end_time
         if start_dt < now:
