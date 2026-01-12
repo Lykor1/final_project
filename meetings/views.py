@@ -1,10 +1,10 @@
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from django.core.exceptions import ValidationError
-from rest_framework.generics import CreateAPIView, DestroyAPIView
-from rest_framework.permissions import IsAdminUser
+from rest_framework.generics import CreateAPIView, DestroyAPIView, ListAPIView
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from .models import Meeting
-from .serializers import MeetingCreateSerializer
+from .serializers import MeetingCreateSerializer, MeetingListSerializer
 from .services import MeetingService
 
 
@@ -35,3 +35,22 @@ class MeetingDeleteView(DestroyAPIView):
 
     def get_queryset(self):
         return Meeting.objects.filter(creator=self.request.user)
+
+
+class MeetingListView(ListAPIView):
+    """
+    Просмотр встреч
+    """
+    permission_classes = (IsAuthenticated,)
+    serializer_class = MeetingListSerializer
+
+    def get_queryset(self):
+        return Meeting.objects.filter(
+            members=self.request.user
+        ).select_related(
+            'creator'
+        ).prefetch_related(
+            'members'
+        ).distinct().order_by(
+            'date', 'start_time'
+        )
