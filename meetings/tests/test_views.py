@@ -1,4 +1,3 @@
-from datetime import time
 import pytest
 from django.urls import reverse
 
@@ -116,3 +115,44 @@ class TestMeetingDeleteView:
         response = self.client.delete(self.url)
         assert response.status_code == 401
         assert Meeting.objects.count() == 1
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestMeetingListView:
+    @pytest.fixture(autouse=True)
+    def setup(self, create_superuser, admin_user_data, create_user, user_data, meeting_data, client):
+        self.admin = create_superuser(**admin_user_data)
+        self.user = create_user(**user_data[0])
+        self.meet = Meeting.objects.create(creator=self.admin, **meeting_data)
+        self.meet.members.add(self.admin)
+        self.client = client
+        self.url = reverse('meetings:list')
+
+    def test_list_meeting_success(self):
+        """
+        Тест на успешное отображение списка встреч
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.get(self.url)
+        assert response.status_code == 200
+        assert self.meet.members.count() == 1
+        assert response.data[0]['topic'] == self.meet.topic
+        assert response.data[0]['creator'] == f'{self.admin.first_name} {self.admin.last_name}'
+        assert response.data[0]['members'][0]['email'] == self.admin.email
+
+    def test_list_without_meeting(self):
+        """
+        Тест доступ без встреч
+        """
+        self.client.force_authenticate(self.user)
+        response = self.client.get(self.url)
+        assert response.status_code == 200
+        assert response.data == []
+
+    def test_list_meeting_unauthenticated_user(self):
+        """
+        Тест на получение списка встреч анонимным пользователем
+        """
+        response = self.client.get(self.url)
+        assert response.status_code == 401

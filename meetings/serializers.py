@@ -1,8 +1,7 @@
-from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from rest_framework import serializers
 
 from meetings.models import Meeting
-from teams.serializers import MembersListSerializer
 
 User = get_user_model()
 
@@ -45,7 +44,7 @@ class MeetingMembersSerializer(serializers.ModelSerializer):
 
 class MeetingListSerializer(serializers.ModelSerializer):
     creator = serializers.SerializerMethodField()
-    members = MembersListSerializer(many=True, read_only=True, source='members.all')
+    members = MeetingMembersSerializer(many=True, read_only=True, source='members.all')
 
     class Meta:
         model = Meeting
