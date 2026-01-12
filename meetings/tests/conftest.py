@@ -40,3 +40,10 @@ def meeting_data():
         'start_time': time(10,0),
         'end_time': time(11,0),
     }
+
+@pytest.fixture
+def team_data():
+    return {
+        'name': 'test_team',
+        'description': 'test_description',
+    }

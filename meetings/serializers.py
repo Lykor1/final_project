@@ -40,7 +40,7 @@ class MeetingMembersSerializer(serializers.ModelSerializer):
         return obj.get_age
 
     def get_full_name(self, obj):
-        return f'{obj.first_name} {obj.last_name}'.strip()
+        return f'{obj.first_name.strip()} {obj.last_name.strip()}'
 
 
 class MeetingListSerializer(serializers.ModelSerializer):
@@ -52,4 +52,4 @@ class MeetingListSerializer(serializers.ModelSerializer):
         fields = ('topic', 'date', 'start_time', 'end_time', 'creator', 'members')
 
     def get_creator(self, obj):
-        return f'{obj.creator.first_name} {obj.creator.last_name}'.strip()
+        return f'{obj.creator.first_name.strip()} {obj.creator.last_name.strip()}'
