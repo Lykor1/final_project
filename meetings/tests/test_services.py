@@ -1,8 +1,10 @@
-from datetime import time
-
+from datetime import time, timedelta
 import pytest
+from django.utils import timezone
 from rest_framework.exceptions import ValidationError
+from freezegun import freeze_time
 
+from meetings.models import Meeting
 from meetings.services import MeetingService
 
 
@@ -84,3 +86,91 @@ class TestCreateMeeting:
                 members=[self.user1]
             )
         assert self.user1.email in str(e.value)
+
+
+@pytest.mark.services
+@pytest.mark.django_db
+class TestUpdateMeeting:
+    @pytest.fixture(autouse=True)
+    def setup(self, create_superuser, admin_user_data, create_user, user_data, meeting_data):
+        self.admin = create_superuser(**admin_user_data)
+        self.user = create_user(**user_data[0])
+        self.meet = Meeting.objects.create(creator=self.admin, **meeting_data)
+        self.new_data = {
+            'topic': 'new topic',
+            'date': timezone.now().date() + timezone.timedelta(days=3),
+            'start_time': time(11, 0),
+            'end_time': time(12, 0),
+            'members': [self.user]
+        }
+
+    def test_update_meeting_success(self):
+        """
+        Тест на успешное обновление данных сервисом
+        """
+        new_meet = MeetingService.update_meeting(
+            meeting=self.meet,
+            creator=self.admin,
+            topic=self.new_data['topic'],
+            date=self.new_data['date'],
+            start_time=self.new_data['start_time'],
+            end_time=self.new_data['end_time'],
+            members=self.new_data['members']
+        )
+        new_meet.refresh_from_db()
+        assert new_meet.topic == self.new_data['topic']
+        assert new_meet.date == self.new_data['date']
+
+    def test_update_completed_meeting(self, meeting_data):
+        """
+        Тест на обновление прошедшей встречи
+        """
+        with freeze_time(timezone.now() - timedelta(days=3)):
+            completed_meet = Meeting.objects.create(
+                topic=meeting_data['topic'],
+                date=timezone.now().date(),
+                start_time=meeting_data['start_time'],
+                end_time=meeting_data['end_time'],
+                creator=self.admin,
+            )
+        with pytest.raises(ValidationError) as e:
+            MeetingService.update_meeting(
+                meeting=completed_meet,
+                creator=self.admin,
+                topic=self.new_data['topic'],
+                date=self.new_data['date'],
+                start_time=self.new_data['start_time'],
+                end_time=self.new_data['end_time'],
+                members=self.new_data['members']
+            )
+        assert 'Нельзя редактировать прошедшую встречу' in str(e.value)
+
+    def test_update_meeting_conflict_members(self, meeting_data, admin_user_data, create_superuser):
+        """
+        Тест на обновление встречи с конфликтом участника
+        """
+        new_admin = create_superuser(
+            email='newadmin@example.com',
+            password=admin_user_data['password'],
+            first_name=admin_user_data['first_name'],
+            last_name=admin_user_data['last_name']
+        )
+        another_meet = Meeting.objects.create(
+            topic=self.new_data['topic'],
+            date=self.new_data['date'],
+            start_time=self.new_data['start_time'],
+            end_time=self.new_data['end_time'],
+            creator=new_admin
+        )
+        another_meet.members.set([self.user])
+        with pytest.raises(ValidationError) as e:
+            MeetingService.update_meeting(
+                meeting=self.meet,
+                creator=self.admin,
+                topic=self.new_data['topic'],
+                date=self.new_data['date'],
+                start_time=self.new_data['start_time'],
+                end_time=self.new_data['end_time'],
+                members=self.new_data['members']
+            )
+        assert 'Следующие пользователи уже участвуют в другой встрече' in str(e.value)

@@ -1,5 +1,7 @@
+from datetime import time
 import pytest
 from django.urls import reverse
+from django.utils import timezone
 
 from meetings.models import Meeting
 
@@ -155,4 +157,84 @@ class TestMeetingListView:
         Тест на получение списка встреч анонимным пользователем
         """
         response = self.client.get(self.url)
+        assert response.status_code == 401
+
+
+@pytest.mark.views
+@pytest.mark.django_db
+class TestMeetingUpdateView:
+    @pytest.fixture(autouse=True)
+    def setup(self, create_superuser, admin_user_data, create_user, user_data, meeting_data, client):
+        self.client = client
+        self.admin = create_superuser(**admin_user_data)
+        self.user = create_user(**user_data[0])
+        self.meet = Meeting.objects.create(creator=self.admin, **meeting_data)
+        self.new_data = {
+            'topic': 'new topic',
+            'date': timezone.now().date() + timezone.timedelta(days=3),
+            'start_time': time(11, 0),
+            'end_time': time(12, 0),
+            'members': [self.user.email]
+        }
+        self.url = reverse('meetings:update', kwargs={'pk': self.meet.pk})
+
+    def test_update_meeting_success(self):
+        """
+        Тест на успешное обновление встречи
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.put(self.url, data=self.new_data)
+        print(response.data)
+        assert response.status_code == 200
+        self.meet.refresh_from_db()
+        assert self.meet.topic == self.new_data['topic']
+        assert self.meet.date == self.new_data['date']
+
+    def test_patch_update_meeting(self, meeting_data):
+        """
+        Тест на частичное обновление встречи
+        """
+        self.client.force_authenticate(self.admin)
+        response = self.client.patch(self.url, data={'topic': self.new_data['topic']})
+        assert response.status_code == 200
+        self.meet.refresh_from_db()
+        assert self.meet.topic == self.new_data['topic']
+        assert self.meet.date == meeting_data['date']
+
+    def test_update_someone_else_meeting(self, admin_user_data, create_superuser):
+        """
+        Тест на обновление чужой встречи
+        """
+        new_admin = create_superuser(
+            email='newadmin@example.com',
+            password=admin_user_data['password'],
+            first_name=admin_user_data['first_name'],
+            last_name=admin_user_data['last_name'],
+        )
+        self.client.force_authenticate(new_admin)
+        response = self.client.put(self.url, data=self.new_data)
+        assert response.status_code == 404
+
+    def test_update_non_exist_meeting(self):
+        """
+        Тест на обновление несуществующей встречи
+        """
+        new_url = reverse('meetings:update', kwargs={'pk': 999})
+        self.client.force_authenticate(self.admin)
+        response = self.client.put(new_url, data=self.new_data)
+        assert response.status_code == 404
+
+    def test_update_meeting_not_admin(self):
+        """
+        Тест на обновление встречи обычным пользователем
+        """
+        self.client.force_authenticate(self.user)
+        response = self.client.put(self.url, data=self.new_data)
+        assert response.status_code == 403
+
+    def test_update_meeting_unauthenticated_user(self):
+        """
+        Тест на обновление встречи анонимным пользователем
+        """
+        response = self.client.put(self.url, data=self.new_data)
         assert response.status_code == 401
