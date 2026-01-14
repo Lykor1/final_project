@@ -1,6 +1,11 @@
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from django.core.exceptions import ValidationError
-from rest_framework.generics import CreateAPIView, DestroyAPIView, ListAPIView
+from rest_framework.generics import (
+    CreateAPIView,
+    DestroyAPIView,
+    ListAPIView,
+    UpdateAPIView
+)
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from .models import Meeting
@@ -54,3 +59,33 @@ class MeetingListView(ListAPIView):
         ).distinct().order_by(
             'date', 'start_time'
         )
+
+
+class MeetingUpdateView(UpdateAPIView):
+    """
+    Обновление встречи
+    """
+    permission_classes = (IsAdminUser,)
+    serializer_class = MeetingCreateSerializer
+
+    def get_queryset(self):
+        return Meeting.objects.filter(creator=self.request.user)
+
+    def perform_update(self, serializer):
+        try:
+            meeting = self.get_object()
+            data = {
+                'topic': serializer.validated_data.get('topic', meeting.topic),
+                'date': serializer.validated_data.get('date', meeting.date),
+                'start_time': serializer.validated_data.get('start_time', meeting.start_time),
+                'end_time': serializer.validated_data.get('end_time', meeting.end_time),
+                'members': serializer.validated_data.get('members', meeting.members.all()),
+            }
+            updated_meeting = MeetingService.update_meeting(
+                meeting=meeting,
+                creator=self.request.user,
+                **data
+            )
+            serializer.instance = updated_meeting
+        except ValidationError as e:
+            raise DRFValidationError(e.message_dict)
