@@ -1,5 +1,4 @@
-from datetime import time
-
+from datetime import time, datetime
 import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -42,7 +41,7 @@ def task_data():
     return {
         'title': 'test_title',
         'description': 'test_description',
-        'deadline': timezone.now() + timezone.timedelta(days=1),
+        'deadline': timezone.make_aware(datetime.combine(timezone.now() + timezone.timedelta(days=1), time(11, 0))),
         'status': 'open'
     }
 
