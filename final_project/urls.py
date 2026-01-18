@@ -24,4 +24,5 @@ urlpatterns = [
     path('tasks/', include('tasks.urls', namespace='tasks')),
     path('evaluations/', include('evaluations.urls', namespace='evaluations')),
     path('meetings/', include('meetings.urls', namespace='meetings')),
+    path('calendars/', include('calendars.urls', namespace='calendars')),
 ]
