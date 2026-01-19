@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Регистрация
+{% endblock %}
+
+{% block content %}
+    <h1>Регистрация</h1>
+
+    <form id="register-form">
+        <div>
+            <label>Email</label><br>
+            <input type="email" name="email" required>
+        </div>
+
+        <div>
+            <label>Имя</label><br>
+            <input type="text" name="first_name" required>
+        </div>
+
+        <div>
+            <label>Фамилия</label><br>
+            <input type="text" name="last_name" required>
+        </div>
+
+        <div>
+            <label>Пароль</label><br>
+            <input type="password" name="password" required>
+        </div>
+
+        <div>
+            <label>Повторите пароль</label><br>
+            <input type="password" name="password2" required>
+        </div>
+
+        <div>
+            <label>Дата рождения</label><br>
+            <input type="date" name="birthday">
+        </div>
+        <br>
+        <button type="submit">Зарегистрироваться</button>
+    </form>
+
+    <p id="error-message" style="color: red;"></p>
+    <p id="success-message" style="color: green;"></p>
+
+    <script>
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const form = e.target;
+            const data = {
+                email: form.email.value,
+                first_name: form.first_name.value,
+                last_name: form.last_name.value,
+                birthday: form.birthday.value || null,
+                password: form.password.value,
+                password2: form.password2.value,
+            };
+
+            const response = await fetch('/users/register/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                document.getElementById('error-message').textContent =
+                    JSON.stringify(result);
+                return;
+            }
+
+            document.getElementById('error-message').textContent = '';
+            document.getElementById('success-message').textContent =
+                'Регистрация успешна';
+            form.reset();
+        });
+    </script>
+{% endblock %}
