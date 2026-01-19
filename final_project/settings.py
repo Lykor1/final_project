@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     'tasks',
     'evaluations',
     'meetings',
-    'calendars'
+    'calendars',
+    'frontend'
 ]
 
 MIDDLEWARE = [
