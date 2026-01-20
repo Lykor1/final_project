@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (Auth.isAuthenticated()) {
         navbar.innerHTML = `
             <li><a href="${URLS.index}">Главная</a></li>
-            <li><a href="${URLS.profile}">Профиль</a></li>
+            <li><a href="${URLS.detail}">Профиль</a></li>
             <li><a href="#" id="logout-link">Выход</a></li>
         `;
 
@@ -29,7 +29,7 @@ async function logout() {
     const refresh = Auth.getRefresh();
 
     if (refresh) {
-        await fetch(URLS.logout, {
+        await fetch(URLS.logoutAPI, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

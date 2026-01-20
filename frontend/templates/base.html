@@ -14,8 +14,9 @@
             index: "{% url 'frontend:index' %}",
             login: "{% url 'frontend:users-login' %}",
             register: "{% url 'frontend:users-register' %}",
-            logout: "{% url 'users:logout' %}",
-            profile: "",
+            logoutAPI: "{% url 'users:logout' %}",
+            detail: "{% url 'frontend:users-detail' %}",
+            detailAPI: "{% url 'users:detail' %}"
         }
     </script>
     <script defer src="{% static 'js/auth.js' %}"></script>

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Детальная информация
+{% endblock %}
+
+{% block content %}
+    <h1>Детальная информация о пользователе</h1>
+
+    <div id="detail-data">
+        <p>Загрузка...</p>
+    </div>
+    <p id="error" style="color: red"></p>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+    if (!Auth.isAuthenticated()) {
+        window.location.href = URLS.login;
+        return;
+    }
+
+    const response = await fetch(URLS.detailAPI, {
+        headers: {
+            'Authorization': `Bearer ${Auth.getAccess()}`
+        }
+    });
+
+    if (!response.ok) {
+        document.getElementById('error').textContent =
+            'Не удалось загрузить детальную информацию';
+        return;
+    }
+
+    const user = await response.json();
+
+    document.getElementById('detail-data').innerHTML = `
+        <p><strong>Email:</strong> ${user.email}</p>
+        <p><strong>Имя:</strong> ${user.full_name}</p>
+        <p><strong>Роль:</strong> ${user.role}</p>
+        <p><strong>Дата рождения:</strong> ${new Date(user.birthday).toLocaleDateString()}</p>
+        <p><strong>Возраст:</strong> ${user.age ?? '-'}</p>
+        <p><strong>Команда:</strong> ${user.team_name ?? '-'}</p>
+        <p><strong>Средний рейтинг:</strong> ${user.average_rank ?? '-'}</p>
+        <p><strong>Дата регистрации:</strong> ${new Date(user.created_at).toLocaleString()}</p>
+    `;
+});
+    </script>
+{% endblock %}
