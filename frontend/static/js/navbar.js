@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (Auth.isAuthenticated()) {
         navbar.innerHTML = `
             <li><a href="${URLS.index}">Главная</a></li>
-            <li><a href="${URLS.detail}">Профиль</a></li>
+            <li><a href="${URLS.userDetail}">Профиль</a></li>
             <li><a href="#" id="logout-link">Выход</a></li>
         `;
 

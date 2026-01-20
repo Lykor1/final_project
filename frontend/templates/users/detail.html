@@ -7,38 +7,129 @@
 {% block content %}
     <h1>Детальная информация о пользователе</h1>
 
-    <div id="detail-data">
-        <p>Загрузка...</p>
-    </div>
-    <p id="error" style="color: red"></p>
+
+    <section id="detail-view">
+        <p><strong>Email:</strong> <span id="email"></span></p>
+        <p><strong>ФИО:</strong> <span id="full-name"></span></p>
+        <p><strong>Дата рождения:</strong> <span id="birthday"></span></p>
+        <p><strong>Возраст:</strong> <span id="age"></span></p>
+        <p><strong>Роль:</strong> <span id="role"></span></p>
+        <p><strong>Команда:</strong> <span id="team"></span></p>
+        <p><strong>Средний рейтинг:</strong> <span id="average-rank"></span></p>
+        <p><strong>Дата регистрации:</strong> <span id="created-at"></span></p>
+
+        <button id="edit-btn">Редактировать профиль</button>
+    </section>
+
+    <hr>
+
+    <section id="detail-edit" style="display: none">
+        <h2>Редактирование данных пользователя</h2>
+
+        <form id="edit-form">
+            <div>
+                <label>Имя</label><br>
+                <input type="text" name="first_name" required>
+            </div>
+            <div>
+                <label>Фамилия</label><br>
+                <input type="text" name="last_name" required>
+            </div>
+            <div>
+                <label>Дата рождения</label><br>
+                <input type="date" name="birthday">
+            </div>
+
+            <button type="submit">Сохранить</button>
+            <button type="button" id="cancel-btn">Отмена</button>
+        </form>
+
+        <p id="form-error" style="color: red"></p>
+        <p id="form-success" style="color: green"></p>
+    </section>
 
     <script>
+        let currentUser = null;
+
         document.addEventListener('DOMContentLoaded', async () => {
             if (!Auth.isAuthenticated()) {
                 window.location.href = URLS.login;
                 return;
             }
 
-            const response = await fetchWithAuth(URLS.detailAPI);
+            await loadProfile();
+        });
+
+        async function loadProfile() {
+            const response = await fetchWithAuth(URLS.userDetailAPI);
 
             if (!response.ok) {
-                document.getElementById('error').textContent =
-                    'Не удалось загрузить детальную информацию';
+                document.getElementById('detail-view').innerHTML =
+                    '<p>Ошибка загрузки профиля</p>';
                 return;
             }
 
-            const user = await response.json();
+            currentUser = await response.json();
 
-            document.getElementById('detail-data').innerHTML = `
-        <p><strong>Email:</strong> ${user.email}</p>
-        <p><strong>Имя:</strong> ${user.full_name}</p>
-        <p><strong>Роль:</strong> ${user.role}</p>
-        <p><strong>Дата рождения:</strong> ${new Date(user.birthday).toLocaleDateString()}</p>
-        <p><strong>Возраст:</strong> ${user.age ?? '-'}</p>
-        <p><strong>Команда:</strong> ${user.team_name ?? '-'}</p>
-        <p><strong>Средний рейтинг:</strong> ${user.average_rank ?? '-'}</p>
-        <p><strong>Дата регистрации:</strong> ${new Date(user.created_at).toLocaleString()}</p>
-    `;
+            document.getElementById('email').textContent = currentUser.email;
+            document.getElementById('full-name').textContent = currentUser.full_name;
+            document.getElementById('birthday').textContent = currentUser.birthday ? new Date(currentUser.birthday).toLocaleDateString() : '---';
+            document.getElementById('age').textContent = currentUser.age ?? '---';
+            document.getElementById('role').textContent = currentUser.role;
+            document.getElementById('team').textContent = currentUser.team_name ?? '—';
+            document.getElementById('average-rank').textContent = currentUser.average_rank ?? '—';
+            document.getElementById('created-at').textContent = new Date(currentUser.created_at).toLocaleString();
+
+            const [firstName, lastName = ''] = currentUser.full_name.split(' ');
+            const form = document.getElementById('edit-form');
+            form.first_name.value = firstName;
+            form.last_name.value = lastName;
+            form.birthday.value = currentUser.birthday ?? '';
+        }
+
+        document.getElementById('edit-btn').addEventListener('click', () => {
+            document.getElementById('detail-view').style.display = 'none';
+            document.getElementById('detail-edit').style.display = 'block';
+        });
+
+        document.getElementById('cancel-btn').addEventListener('click', () => {
+            document.getElementById('detail-edit').style.display = 'none';
+            document.getElementById('detail-view').style.display = 'block';
+        });
+
+        document.getElementById('edit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const form = e.target;
+
+            const payload = {
+                first_name: form.first_name.value,
+                last_name: form.last_name.value,
+                birthday: form.birthday.value || null
+            };
+
+            const response = await fetchWithAuth(URLS.userUpdateAPI, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                document.getElementById('form-error').textContent =
+                    JSON.stringify(data);
+                return;
+            }
+
+            document.getElementById('form-error').textContent = '';
+            document.getElementById('form-success').textContent =
+                'Профиль успешно обновлён';
+
+            await loadProfile();
+
+            document.getElementById('detail-edit').style.display = 'none';
+            document.getElementById('detail-view').style.display = 'block';
         });
     </script>
 {% endblock %}

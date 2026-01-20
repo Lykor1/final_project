@@ -13,12 +13,14 @@
         window.URLS = {
             index: "{% url 'frontend:index' %}",
             login: "{% url 'frontend:users-login' %}",
-            loginAPI: "{% url 'users:login' %}",
             register: "{% url 'frontend:users-register' %}",
+            userDetail: "{% url 'frontend:users-detail' %}",
+
+            loginAPI: "{% url 'users:login' %}",
             logoutAPI: "{% url 'users:logout' %}",
-            detail: "{% url 'frontend:users-detail' %}",
-            detailAPI: "{% url 'users:detail' %}",
-            refreshAPI: "{% url 'users:refresh' %}"
+            userDetailAPI: "{% url 'users:detail' %}",
+            refreshAPI: "{% url 'users:refresh' %}",
+            userUpdateAPI:"{% url 'users:update' %}",
         }
     </script>
     <script defer src="{% static 'js/auth.js' %}"></script>
