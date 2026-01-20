@@ -11,13 +11,38 @@ const Auth = {
         return !!this.getAccess();
     },
 
-    login(access, refresh) {
+    setTokens(access, refresh) {
         localStorage.setItem('access', access);
-        localStorage.setItem('refresh', refresh);
+        if (refresh) {
+            localStorage.setItem('refresh', refresh);
+        }
     },
 
     logout() {
         localStorage.removeItem('access');
         localStorage.removeItem('refresh');
+    },
+
+    async refreshAccessToken() {
+        const refresh = this.getRefresh();
+        if (!refresh) {
+            this.logout();
+            return false;
+        }
+
+        const response = await fetch(URLS.refreshAPI, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh })
+        });
+
+        if (!response.ok) {
+            this.logout();
+            return false;
+        }
+
+        const data = await response.json();
+        this.setTokens(data.access, data.refresh);
+        return true;
     }
 };
