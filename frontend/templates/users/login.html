@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Вход
+{% endblock %}
+
+{% block content %}
+    <h1>Вход</h1>
+
+    <form id="login-form">
+        <div>
+            <label>Email</label><br>
+            <input type="email" name="email" required>
+        </div>
+        <div>
+            <label>Пароль</label><br>
+            <input type="password" name="password" required>
+        </div>
+        <button type="submit">Войти</button>
+    </form>
+    <p id="error" style="color: red"></p>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const form = e.target;
+
+            const response = await fetch('/users/login/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    email: form.email.value,
+                    password: form.password.value
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                document.getElementById('error').textContent = 'Неверные данные';
+                return;
+            }
+
+            Auth.login(data.access, data.refresh);
+            window.location.href = '/';
+        });
+    </script>
+{% endblock %}

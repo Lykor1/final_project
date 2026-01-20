@@ -7,4 +7,5 @@ app_name = 'frontend'
 urlpatterns = [
     path('', views.index, name='index'),
     path('register/', views.users_register, name='users-register'),
+    path('login/', views.users_login, name='users-login'),
 ]

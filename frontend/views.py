@@ -7,3 +7,7 @@ def index(request):
 
 def users_register(request):
     return render(request, 'users/register.html')
+
+
+def users_login(request):
+    return render(request, 'users/login.html')
