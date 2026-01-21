@@ -23,17 +23,13 @@
             }
 
             if (payload.role === 'admin') {
-                document.getElementById('apps-links').innerHTML = `
-            <h3>Доступные разделы</h3>
-            <ul>
-                <li>
-                    <a href="${URLS.usersList}">
-                        Список пользователей
-                    </a>
-                </li>
-            </ul>
-        `;
+                html = `
+                    <li><a href="${URLS.usersList}">Список пользователей</a></li>
+                    <li><a href="${URLS.teamsCreate}">Создать команду</a></li>
+                `;
             }
+            html += '</ul>';
+            document.getElementById('apps-links').innerHTML = html;
         });
     </script>
 {% endblock %}

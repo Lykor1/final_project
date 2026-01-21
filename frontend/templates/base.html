@@ -19,6 +19,7 @@
             register: "{% url 'frontend:users-register' %}",
             userDetail: "{% url 'frontend:users-detail' %}",
             usersList: "{% url 'frontend:users-list' %}",
+            teamsCreate:"{% url 'frontend:teams-create' %}",
 
             loginAPI: "{% url 'users:login' %}",
             logoutAPI: "{% url 'users:logout' %}",
@@ -26,7 +27,8 @@
             refreshAPI: "{% url 'users:refresh' %}",
             userUpdateAPI: "{% url 'users:update' %}",
             usersListAPI: "{% url 'users:list' %}",
-            usersDeleteAPI: "{% url 'users:delete' 'EMAIL_PLACEHOLDER' %}"
+            usersDeleteAPI: "{% url 'users:delete' 'EMAIL_PLACEHOLDER' %}",
+            teamsCreateAPI: "{% url 'teams:create' %}",
         }
     </script>
     <script defer src="{% static 'js/auth.js' %}"></script>

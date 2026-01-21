@@ -19,3 +19,7 @@ def users_detail(request):
 
 def users_list(request):
     return render(request, 'users/list.html')
+
+
+def teams_create(request):
+    return render(request, 'teams/create.html')

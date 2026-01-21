@@ -10,4 +10,5 @@ urlpatterns = [
     path('login/', views.users_login, name='users-login'),
     path('users/detail/', views.users_detail, name='users-detail'),
     path('users/list/', views.users_list, name='users-list'),
+    path('teams/create/', views.teams_create, name='teams-create'),
 ]

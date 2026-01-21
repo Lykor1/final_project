@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Создание команды
+{% endblock %}
+
+{% block content %}
+    <h1>Создание команды</h1>
+
+    <form id="team-create-form">
+        <div>
+            <label>Название команды</label>
+            <input type="text" name="name" required minlength="3">
+        </div>
+        <div>
+            <label>Описание</label>
+            <textarea name="description"></textarea>
+        </div>
+
+        <button type="submit">Создать</button>
+    </form>
+
+    <p id="success" style="color: green"></p>
+    <p id="error" style="color: red"></p>
+
+    <script>
+        document.getElementById('team-create-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!Auth.isAuthenticated()) {
+                window.location.href = URLS.login;
+                return;
+            }
+
+            const payload = getJwtPayload();
+            if (!payload || payload.role !== 'admin') {
+                document.getElementById('error').textContent =
+                    'Недостаточно прав';
+                return;
+            }
+
+            const form = e.target;
+
+            const response = await fetchWithAuth(URLS.teamsCreateAPI, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name: form.name.value,
+                    description: form.description.value
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                document.getElementById('error').textContent =
+                    data.detail || 'Ошибка создания команды';
+                return;
+            }
+
+            document.getElementById('error').textContent = '';
+            document.getElementById('success').textContent =
+                'Команда успешно создана';
+
+            form.reset();
+        });
+    </script>
+{% endblock %}
