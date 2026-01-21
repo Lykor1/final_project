@@ -73,6 +73,8 @@
                         <td>
                             <button onclick="deleteTeam(${team.id})">Удалить</button>
                             <hr>
+                            <button onclick="updateTeam(${team.id})">Редактировать</button>
+                            <hr>
                             <div>
                                 <input type="email" placeholder="email пользователя" id="add-user-email-${team.id}"
                                 style="width: 200px">
@@ -133,6 +135,36 @@
             alert('Пользователь успешно добавлен в команду');
             input.value = '';
             location.reload()
+        }
+
+        async function updateTeam(teamId) {
+            const newName = prompt('Новое название команды');
+            if (!newName) return;
+
+            const newDescription = prompt('Новое описание команды') || '';
+
+            const url = URLS.teamsUpdateAPI.replace('/0', `/${teamId}`);
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('access')}`
+                },
+                body: JSON.stringify({
+                    name: newName,
+                    description: newDescription
+                })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                alert(data.detail || 'Ошибка обновления команды');
+                return;
+            }
+
+            alert('Команда обновлена');
+            location.reload();
         }
     </script>
 {% endblock %}
