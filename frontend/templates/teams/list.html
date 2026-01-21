@@ -70,10 +70,35 @@
                         <td>${team.description || '---'}</td>
                         <td>${team.creator.full_name} (${team.creator.email})</td>
                         <td>${members || '---'}</td>
-                        <td><button onclick="#">Удалить</button></td>
+                        <td><button onclick="deleteTeam(${team.id})">Удалить</button></td>
                     </tr>
                 `);
             });
         });
+
+        function getDeleteTeamUrl(teamId) {
+            return URLS.teamsDeleteAPI.replace('/0', `/${teamId}`);
+        }
+
+        async function deleteTeam(teamId) {
+            if (!confirm('Удалить команду?')) return;
+
+            const response = await fetchWithAuth(
+                getDeleteTeamUrl(teamId),
+                {method: 'DELETE'}
+            );
+
+            if (response.status === 403) {
+                alert('Недостаточно прав');
+                return;
+            }
+
+            if (!response.ok) {
+                alert('Ошибка удаления команды');
+                return;
+            }
+
+            document.querySelector(`tr[data-team-id="${teamId}"]`)?.remove();
+        }
     </script>
 {% endblock %}
