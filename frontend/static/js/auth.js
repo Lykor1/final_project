@@ -32,8 +32,8 @@ const Auth = {
 
         const response = await fetch(URLS.refreshAPI, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refresh })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({refresh})
         });
 
         if (!response.ok) {

@@ -15,11 +15,14 @@
                 return;
             }
 
-            if (!APP.user) {
-                await loadCurrentUser();
+            const payload = getJwtPayload();
+
+            if (!payload) {
+                Auth.logout();
+                return;
             }
 
-            if (APP.user && APP.user.role === 'admin') {
+            if (payload.role === 'admin') {
                 document.getElementById('apps-links').innerHTML = `
             <h3>Доступные разделы</h3>
             <ul>

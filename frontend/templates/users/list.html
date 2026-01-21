@@ -38,7 +38,6 @@
 
             const response = await fetchWithAuth(URLS.usersListAPI);
 
-            // не админ
             if (response.status === 403) {
                 document.getElementById('error').textContent =
                     'Доступ запрещён. Только для администраторов.';
@@ -48,36 +47,27 @@
 
             if (!response.ok) {
                 document.getElementById('error').textContent =
-                    'Ошибка загрузки списка пользователей';
+                    'Ошибка загрузки пользователей';
                 return;
             }
 
             const users = await response.json();
             const tbody = document.getElementById('users-body');
-
             tbody.innerHTML = '';
 
-            if (users.length === 0) {
-                tbody.innerHTML =
-                    '<tr><td colspan="8">Пользователи не найдены</td></tr>';
-                return;
-            }
-
             users.forEach(user => {
-                const tr = document.createElement('tr');
-
-                tr.innerHTML = `
-            <td>${user.id}</td>
-            <td>${user.email}</td>
-            <td>${user.full_name}</td>
-            <td>${user.birthday ? new Date(user.birthday).toLocaleDateString() : '---'}</td>
-            <td>${user.age ?? '---'}</td>
-            <td>${user.role}</td>
-            <td>${user.team_name ?? '---'}</td>
-            <td>${new Date(user.created_at).toLocaleDateString()}</td>
-        `;
-
-                tbody.appendChild(tr);
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>${user.email}</td>
+                        <td>${user.full_name}</td>
+                        <td>${user.birthday ? new Date(user.birthday).toLocaleDateString() : '---'}</td>
+                        <td>${user.age ?? '---'}</td>
+                        <td>${user.role}</td>
+                        <td>${user.team_name ?? '---'}</td>
+                        <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                    </tr>
+                `);
             });
         });
     </script>
