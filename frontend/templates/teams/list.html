@@ -70,21 +70,25 @@
                         <td>${team.description || '---'}</td>
                         <td>${team.creator.full_name} (${team.creator.email})</td>
                         <td>${members || '---'}</td>
-                        <td><button onclick="deleteTeam(${team.id})">Удалить</button></td>
+                        <td>
+                            <button onclick="deleteTeam(${team.id})">Удалить</button>
+                            <hr>
+                            <div>
+                                <input type="email" placeholder="email пользователя" id="add-user-email-${team.id}"
+                                style="width: 200px">
+                                <button onclick="addUserToTeam(${team.id})">Добавить</button>
+                            </div>
+                        </td>
                     </tr>
                 `);
             });
         });
 
-        function getDeleteTeamUrl(teamId) {
-            return URLS.teamsDeleteAPI.replace('/0', `/${teamId}`);
-        }
-
         async function deleteTeam(teamId) {
             if (!confirm('Удалить команду?')) return;
 
             const response = await fetchWithAuth(
-                getDeleteTeamUrl(teamId),
+                URLS.teamsDeleteAPI.replace('/0', `/${teamId}`),
                 {method: 'DELETE'}
             );
 
@@ -99,6 +103,36 @@
             }
 
             document.querySelector(`tr[data-team-id="${teamId}"]`)?.remove();
+        }
+
+        async function addUserToTeam(teamId) {
+            const input = document.getElementById(`add-user-email-${teamId}`);
+            const email = input.value.trim();
+
+            if (!email) {
+                alert('Введите email пользователя');
+                return;
+            }
+
+            const response = await fetchWithAuth(
+                URLS.teamsAddUserAPI.replace('/0', `/${teamId}`),
+                {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({user_email: email})
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.detail || 'Ошибка добавления пользователя');
+                return;
+            }
+
+            alert('Пользователь успешно добавлен в команду');
+            input.value = '';
+            location.reload()
         }
     </script>
 {% endblock %}
