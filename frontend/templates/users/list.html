@@ -18,6 +18,7 @@
             <th>Роль</th>
             <th>Команда</th>
             <th>Дата регистрации</th>
+            <th>Действия</th>
         </tr>
         </thead>
         <tbody id="users-body">
@@ -57,7 +58,7 @@
 
             users.forEach(user => {
                 tbody.insertAdjacentHTML('beforeend', `
-                    <tr>
+                    <tr data-email="${user.email}">
                         <td>${user.id}</td>
                         <td>${user.email}</td>
                         <td>${user.full_name}</td>
@@ -66,9 +67,46 @@
                         <td>${user.role}</td>
                         <td>${user.team_name ?? '---'}</td>
                         <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <button onclick="deleteUser('${user.email}')">Удалить</button>
+                        </td>
                     </tr>
                 `);
             });
         });
+
+        function getDeleteUserUrl(email) {
+            return URLS.usersDeleteAPI.replace(
+                'EMAIL_PLACEHOLDER',
+                encodeURIComponent(email)
+            );
+        }
+
+
+        async function deleteUser(email) {
+            if (!confirm(`Удалить пользователя ${email}?`)) {
+                return;
+            }
+
+            const response = await fetchWithAuth(
+                getDeleteUserUrl(email),
+                {method: 'DELETE'}
+            );
+
+            if (response.status === 403) {
+                alert('Недостаточно прав');
+                return;
+            }
+
+            if (!response.ok) {
+                alert('Ошибка при удалении пользователя');
+                return;
+            }
+
+            const row = document.querySelector(`tr[data-email="${email}"]`);
+            if (row) {
+                row.remove();
+            }
+        }
     </script>
 {% endblock %}

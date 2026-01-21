@@ -25,7 +25,8 @@
             userDetailAPI: "{% url 'users:detail' %}",
             refreshAPI: "{% url 'users:refresh' %}",
             userUpdateAPI: "{% url 'users:update' %}",
-            usersListAPI: "{% url 'users:list' %}"
+            usersListAPI: "{% url 'users:list' %}",
+            usersDeleteAPI: "{% url 'users:delete' 'EMAIL_PLACEHOLDER' %}"
         }
     </script>
     <script defer src="{% static 'js/auth.js' %}"></script>
