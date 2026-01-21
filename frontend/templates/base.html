@@ -10,21 +10,27 @@
         Final Project
     {% endblock %}</title>
     <script>
+        window.APP = {
+            user: null
+        }
         window.URLS = {
             index: "{% url 'frontend:index' %}",
             login: "{% url 'frontend:users-login' %}",
             register: "{% url 'frontend:users-register' %}",
             userDetail: "{% url 'frontend:users-detail' %}",
+            usersList: "{% url 'frontend:users-list' %}",
 
             loginAPI: "{% url 'users:login' %}",
             logoutAPI: "{% url 'users:logout' %}",
             userDetailAPI: "{% url 'users:detail' %}",
             refreshAPI: "{% url 'users:refresh' %}",
-            userUpdateAPI:"{% url 'users:update' %}",
+            userUpdateAPI: "{% url 'users:update' %}",
+            usersListAPI: "{% url 'users:list' %}"
         }
     </script>
     <script defer src="{% static 'js/auth.js' %}"></script>
     <script defer src="{% static 'js/api.js' %}"></script>
+    <script defer src="{% static 'js/user.js' %}"></script>
     <script defer src="{% static 'js/navbar.js' %}"></script>
 </head>
 <body>

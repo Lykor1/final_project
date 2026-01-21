@@ -1,5 +1,36 @@
 {% extends 'base.html' %}
 
+{% block title %}
+    Главная страница
+{% endblock %}
+
 {% block content %}
-	<h1>Главная страница</h1>
+    <h1>Главная страница</h1>
+
+    <div id="apps-links"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!Auth.isAuthenticated()) {
+                return;
+            }
+
+            if (!APP.user) {
+                await loadCurrentUser();
+            }
+
+            if (APP.user && APP.user.role === 'admin') {
+                document.getElementById('apps-links').innerHTML = `
+            <h3>Доступные разделы</h3>
+            <ul>
+                <li>
+                    <a href="${URLS.usersList}">
+                        Список пользователей
+                    </a>
+                </li>
+            </ul>
+        `;
+            }
+        });
+    </script>
 {% endblock %}

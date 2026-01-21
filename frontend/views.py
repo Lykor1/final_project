@@ -15,3 +15,7 @@ def users_login(request):
 
 def users_detail(request):
     return render(request, 'users/detail.html')
+
+
+def users_list(request):
+    return render(request, 'users/list.html')

@@ -76,8 +76,8 @@
             document.getElementById('birthday').textContent = currentUser.birthday ? new Date(currentUser.birthday).toLocaleDateString() : '---';
             document.getElementById('age').textContent = currentUser.age ?? '---';
             document.getElementById('role').textContent = currentUser.role;
-            document.getElementById('team').textContent = currentUser.team_name ?? '—';
-            document.getElementById('average-rank').textContent = currentUser.average_rank ?? '—';
+            document.getElementById('team').textContent = currentUser.team_name ?? '---';
+            document.getElementById('average-rank').textContent = currentUser.average_rank ?? '---';
             document.getElementById('created-at').textContent = new Date(currentUser.created_at).toLocaleString();
 
             const [firstName, lastName = ''] = currentUser.full_name.split(' ');
