@@ -43,3 +43,8 @@ def teams_update(request, team_id):
 
 def teams_detail(request):
     return render(request, 'teams/detail.html')
+
+
+def tasks_create(request, team_id):
+    team = get_object_or_404(Team, pk=team_id)
+    return render(request, 'tasks/create.html', {'team': team})

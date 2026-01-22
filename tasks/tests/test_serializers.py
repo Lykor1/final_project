@@ -18,7 +18,7 @@ class TestTaskCreateSerializer:
     @pytest.fixture(autouse=True)
     def setup(self, task_data, create_user, user_data):
         self.user = create_user(**user_data)
-        task_data['assigned_to'] = self.user.id
+        task_data['assigned_to'] = self.user.email
 
     def test_create_task_success(self, task_data):
         """

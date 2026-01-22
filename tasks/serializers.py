@@ -1,10 +1,20 @@
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
+from django.contrib.auth import get_user_model
 
 from .models import Task, validate_future_date, Comment
 
+User = get_user_model()
+
 
 class TaskCreateSerializer(serializers.ModelSerializer):
+    assigned_to = serializers.SlugRelatedField(
+        slug_field='email',
+        queryset=User.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
     class Meta:
         model = Task
         fields = ('title', 'description', 'deadline', 'status', 'assigned_to')
@@ -61,7 +71,8 @@ class TaskListUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = ('title', 'description', 'deadline', 'status', 'created_by', 'rank', 'created_at', 'updated_at', 'comments')
+        fields = ('title', 'description', 'deadline', 'status', 'created_by', 'rank', 'created_at', 'updated_at',
+                  'comments')
         read_only_fields = fields
 
 

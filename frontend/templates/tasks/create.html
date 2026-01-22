@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Создание задачи
+{% endblock %}
+
+{% block content %}
+    <h1>Создание задачи для команды "{{ team.name }}"</h1>
+
+    <form id="task-create-form">
+        <div>
+            <label>Название</label><br>
+            <input type="text" id="title" required minlength="3">
+        </div>
+        <div>
+            <label>Описание</label><br>
+            <textarea id="description"></textarea>
+        </div>
+        <div>
+            <label>Срок исполнения</label><br>
+            <input type="datetime-local" id="deadline" required>
+        </div>
+        <div>
+            <label>Статус</label><br>
+            <select id="status">
+                <option value="open">Открытая</option>
+                <option value="in_progress">В работе</option>
+                <option value="done">Выполнена</option>
+            </select>
+        </div>
+        <div>
+            <label>Исполнитель (email)</label><br>
+            <input type="email" id="assigned_to">
+        </div>
+
+        <button type="submit">Создать</button>
+        <a href="{% url 'frontend:teams-list' %}">Назад</a>
+    </form>
+
+    <script>
+        const TASK_CREATE_API = "{% url 'tasks:create' team.id %}";
+    </script>
+
+    <script>
+        document
+            .getElementById('task-create-form')
+            .addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const title = document.getElementById('title').value.trim();
+                const description = document.getElementById('description').value.trim();
+                const deadline = document.getElementById('deadline').value;
+                const status = document.getElementById('status').value;
+                const assignedTo = document.getElementById('assigned_to').value.trim();
+
+                if (!title || !deadline) {
+                    alert('Название и дедлайн обязательны');
+                    return;
+                }
+
+                if ((status === 'in_progress' || status === 'done') && !assignedTo) {
+                    alert('Для статуса "В работе" или "Выполнена" необходимо указать исполнителя');
+                    return;
+                }
+
+                const payload = {
+                    title: title,
+                    description: description,
+                    deadline: deadline,
+                    status: status
+                };
+
+                if (assignedTo) {
+                    payload.assigned_to = assignedTo;
+                }
+
+                const response = await fetch(TASK_CREATE_API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access')}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.detail || JSON.stringify(data));
+                    return;
+                }
+
+                alert('Задача создана');
+                window.location.href = "{% url 'frontend:teams-list' %}";
+            });
+    </script>
+{% endblock %}
