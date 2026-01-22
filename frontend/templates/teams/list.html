@@ -7,6 +7,12 @@
 {% block content %}
     <h1>Список команд</h1>
 
+    <h3>Удаление пользователя из команды</h3>
+    <div style="margin-bottom: 16px">
+        <input type="email" id="remove-user-email" placeholder="email пользователя" style="width: 260px" required>
+        <button onclick="removeUserFromTeam()">Удалить из команды</button>
+    </div>
+
     <table border="1" cellpadding="6">
         <thead>
         <tr>
@@ -164,6 +170,36 @@
             }
 
             alert('Команда обновлена');
+            location.reload();
+        }
+
+        async function removeUserFromTeam() {
+            const emailInput = document.getElementById('remove-user-email');
+            const email = emailInput.value.trim();
+
+            if (!email) {
+                alert('Введите email пользователя');
+                return;
+            }
+
+            const response = await fetch(URLS.teamsRemoveUserAPI, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('access')}`
+                },
+                body: JSON.stringify({user_email: email})
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.detail || 'Ошибка удаления пользователя');
+                return;
+            }
+
+            alert('Пользователь удалён из команды');
+            emailInput.value = '';
             location.reload();
         }
     </script>

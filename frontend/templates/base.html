@@ -31,9 +31,10 @@
             usersDeleteAPI: "{% url 'users:delete' 'EMAIL_PLACEHOLDER' %}",
             teamsCreateAPI: "{% url 'teams:create' %}",
             teamsListAPI: "{% url 'teams:list' %}",
-            teamsDeleteAPI:"{% url 'teams:delete' 0 %}",
-            teamsAddUserAPI:"{% url 'teams:add-user' 0 %}",
-            teamsUpdateAPI: "{% url 'teams:update' 0 %}"
+            teamsDeleteAPI: "{% url 'teams:delete' 0 %}",
+            teamsAddUserAPI: "{% url 'teams:add-user' 0 %}",
+            teamsUpdateAPI: "{% url 'teams:update' 0 %}",
+            teamsRemoveUserAPI: "{% url 'teams:remove-user' %}",
         }
     </script>
     <script defer src="{% static 'js/auth.js' %}"></script>
