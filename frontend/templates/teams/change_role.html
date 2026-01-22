@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Изменение роли
+{% endblock %}
+
+{% block content %}
+    <h1>Изменение роли пользователя</h1>
+
+    <p>Команда: <strong>{{ team.name }}</strong></p>
+
+    <form id="change-role-form">
+        <div>
+            <label>Email пользователя</label><br>
+            <input type="email" id="email" required>
+        </div>
+        <div>
+            <label>Новая роль</label><br>
+            <select id="role">
+                <option value="user">Пользователь</option>
+                <option value="manager">Менеджер</option>
+                <option value="admin">Админ</option>
+            </select>
+        </div>
+        <button type="submit">Изменить роль</button>
+        <a href="{% url 'frontend:teams-list' %}">Назад</a>
+    </form>
+
+    <script>
+        const TEAM_CHANGE_ROLE_API =
+            "{% url 'teams:change-role' team.id %}";
+    </script>
+
+    <script>
+        document
+            .getElementById('change-role-form')
+            .addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const email = document.getElementById('email').value.trim();
+                const role = document.getElementById('role').value;
+
+                if (!email) {
+                    alert('Введите email');
+                    return;
+                }
+
+                const response = await fetch(TEAM_CHANGE_ROLE_API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access')}`
+                    },
+                    body: JSON.stringify({
+                        user_email: email,
+                        user_role: role
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.detail || 'Ошибка изменения роли');
+                    return;
+                }
+
+                alert('Роль пользователя изменена');
+                document.getElementById('email').value = '';
+            });
+    </script>
+{% endblock %}

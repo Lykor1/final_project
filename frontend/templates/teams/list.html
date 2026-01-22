@@ -81,6 +81,8 @@
                             <hr>
                             <button onclick="updateTeam(${team.id})">Редактировать</button>
                             <hr>
+                            <a href="${URLS.teamsChangeRole.replace('/0', `/${team.id}`)}">Изменить роль пользователя</a>
+                            <hr>
                             <div>
                                 <input type="email" placeholder="email пользователя" id="add-user-email-${team.id}"
                                 style="width: 200px">

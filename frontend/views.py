@@ -1,4 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
+
+from teams.models import Team
 
 
 def index(request):
@@ -27,3 +29,8 @@ def teams_create(request):
 
 def teams_list(request):
     return render(request, 'teams/list.html')
+
+
+def teams_change_role(request, team_id):
+    team = get_object_or_404(Team, pk=team_id)
+    return render(request, 'teams/change_role.html', {'team': team})
