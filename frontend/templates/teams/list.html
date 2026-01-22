@@ -68,14 +68,34 @@
             }
 
             teams.forEach(team => {
-                const members = team.members.map(m => `${m.full_name} (${m.email})`).join('<br>');
+                const members = team.members.map(m => `
+                    <div>
+                        <p><strong>ID:</strong> ${m.id}</p>
+                        <p><strong>Email:</strong> ${m.email}</p>
+                        <p><strong>ФИО:</strong> ${m.full_name}</p>
+                        <p><strong>Дата рождения:</strong> ${m.birthday ? new Date(m.birthday).toLocaleDateString() : '---'}</p>
+                        <p><strong>Возраст:</strong> ${m.age ?? '---'}</p>
+                        <p><strong>Роль:</strong> ${m.role}</p>
+                        <p><strong>Дата регистрации:</strong> ${new Date(m.created_at).toLocaleString()}</p>
+                    </div>
+                `).join('<hr>');
 
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr data-team-id="${team.id}">
                         <td>${team.id}</td>
                         <td>${team.name}</td>
                         <td>${team.description || '---'}</td>
-                        <td>${team.creator.full_name} (${team.creator.email})</td>
+                        <td>
+                            <div>
+                                <p><strong>ID:</strong> ${team.creator.id}</p>
+                                <p><strong>Email:</strong> ${team.creator.email}</p>
+                                <p><strong>ФИО:</strong> ${team.creator.full_name}</p>
+                                <p><strong>Дата рождения:</strong> ${team.creator.birthday ? new Date(team.creator.birthday).toLocaleDateString() : '---'}</p>
+                                <p><strong>Возраст:</strong> ${team.creator.age ?? '---'}</p>
+                                <p><strong>Роль:</strong> ${team.creator.role}</p>
+                                <p><strong>Дата регистрации:</strong> ${new Date(team.creator.created_at).toLocaleString()}</p>
+                            </div>
+                        </td>
                         <td>${members || '---'}</td>
                         <td>
                             <button onclick="deleteTeam(${team.id})">Удалить</button>
@@ -148,38 +168,6 @@
             input.value = '';
             location.reload()
         }
-
-        <!--
-        async function updateTeam(teamId) {
-            const newName = prompt('Новое название команды');
-            if (!newName) return;
-
-            const newDescription = prompt('Новое описание команды') || '';
-
-            const url = URLS.teamsUpdateAPI.replace('/0', `/${teamId}`);
-
-            const response = await fetch(url, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access')}`
-                },
-                body: JSON.stringify({
-                    name: newName,
-                    description: newDescription
-                })
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                alert(data.detail || 'Ошибка обновления команды');
-                return;
-            }
-
-            alert('Команда обновлена');
-            location.reload();
-        }
-        -->
 
         async function removeUserFromTeam() {
             const emailInput = document.getElementById('remove-user-email');
