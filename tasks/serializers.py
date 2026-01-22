@@ -59,9 +59,13 @@ class CommentCreateSerializer(serializers.ModelSerializer):
 
 
 class CommentListSerializer(serializers.ModelSerializer):
+    author_email = serializers.CharField(
+        source='author.email',
+        read_only=True,
+    )
     class Meta:
         model = Comment
-        fields = ('author', 'text')
+        fields = ('author_email', 'text')
         read_only_fields = fields
 
 
@@ -77,10 +81,31 @@ class TaskListUserSerializer(serializers.ModelSerializer):
 
 
 class TaskListAdminSerializer(serializers.ModelSerializer):
+    assigned_to_email = serializers.CharField(
+        source='assigned_to.email',
+        read_only=True,
+        allow_null=True,
+    )
+    assigned_to_first_name = serializers.CharField(
+        source='assigned_to.first_name',
+        read_only=True,
+        allow_null=True,
+    )
+    assigned_to_last_name = serializers.CharField(
+        source='assigned_to.last_name',
+        read_only=True,
+        allow_null=True,
+    )
+    team_name = serializers.CharField(
+        source='team.name',
+        read_only=True,
+        allow_null=True,
+    )
     comments = CommentListSerializer(read_only=True, many=True, source='tasks')
 
     class Meta:
         model = Task
-        fields = ('id', 'title', 'description', 'deadline', 'status', 'assigned_to', 'team', 'created_at', 'updated_at',
+        fields = ('id', 'title', 'description', 'deadline', 'status', 'assigned_to_email', 'assigned_to_first_name',
+                  'assigned_to_last_name', 'team_name', 'created_at', 'updated_at',
                   'comments')
         read_only_fields = fields

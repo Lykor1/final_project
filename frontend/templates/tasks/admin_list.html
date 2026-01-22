@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Список всех задач
+{% endblock %}
+
+{% block content %}
+    <h1>Список всех созданных задач</h1>
+
+    <table border="1" cellpadding="6" style="width: 100%; border-collapse: collapse">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Описание</th>
+            <th>Команда</th>
+            <th>Срок</th>
+            <th>Статус</th>
+            <th>Исполнитель</th>
+            <th>Создано</th>
+            <th>Комментарии</th>
+            <th>Действия</th>
+        </tr>
+        </thead>
+        <tbody id="tasks-body">
+        <tr>
+            <td colspan="10">Загрузка...</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p id="error" style="color: red"></p>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!Auth.isAuthenticated()) {
+                window.location.href = URLS.login;
+                return;
+            }
+
+            const payload = getJwtPayload();
+            if (!payload || payload.role !== 'admin') {
+                document.getElementById('error').textContent =
+                    'Доступ запрещён. Только для администраторов.';
+                document.getElementById('tasks-body').innerHTML = '';
+                return;
+            }
+
+            const response = await fetchWithAuth(URLS.tasksAdminListAPI);
+
+            if (!response.ok) {
+                document.getElementById('error').textContent = 'Ошибка загрузки списка задач';
+                document.getElementById('tasks-body').innerHTML = '';
+                return;
+            }
+
+            const tasks = await response.json();
+            const tbody = document.getElementById('tasks-body');
+            tbody.innerHTML = '';
+
+            if (!tasks.length) {
+                tbody.innerHTML = '<tr><td colspan="10">Задачи не найдены</td></tr>';
+                return;
+            }
+
+            tasks.forEach(task => {
+                const deadline = task.deadline ? new Date(task.deadline).toLocaleString() : '---';
+
+                const createdAt = new Date(task.created_at).toLocaleDateString();
+
+                const assigned = task.assigned_to_email ? `${task.assigned_to_email} (${task.assigned_to_first_name} ${task.assigned_to_last_name})` : '---';
+
+                const teamName = task.team_name ?? '---';
+
+                const commentsCount = task.comments ? task.comments.length : 0;
+                let commentsHtml = '';
+                if (commentsCount > 0) {
+                    commentsHtml = task.comments.map(c =>
+                        `<div><strong>${c.author_email}:</strong> ${c.text.substring(0, 60)}${c.text.length > 60 ? '...' : ''}</div>`
+                    ).join('');
+                } else {
+                    commentsHtml = '---';
+                }
+
+                const statusText = {
+                    'open': 'Открытая',
+                    'in_progress': 'В работе',
+                    'done': 'Выполнена'
+                }[task.status] || task.status;
+
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr data-task-id="${task.id}">
+                        <td>${task.id}</td>
+                        <td>${task.title}</td>
+                        <td>${task.description ? task.description.substring(0, 80) + (task.description.length > 80 ? '...' : '') : '---'}</td>
+                        <td>${teamName}</td>
+                        <td>${deadline}</td>
+                        <td>${statusText}</td>
+                        <td>${assigned}</td>
+                        <td>${createdAt}</td>
+                        <td style="max-width: 200px; overflow: hidden;">
+                            ${commentsHtml}
+                        </td>
+                        <td>
+                            <a href="#" onclick="alert('Детальная страница задачи пока не реализована (ID: ${task.id})'); return false;">Просмотр</a>
+                        </td>
+                    </tr>
+                `);
+            });
+        });
+    </script>
+{% endblock %}

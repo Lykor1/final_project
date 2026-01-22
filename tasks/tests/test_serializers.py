@@ -215,9 +215,9 @@ class TestCommentListSerializer:
         Тест на успешное отображение комментария
         """
         serializer = CommentListSerializer(instance=self.comment)
-        expected_fields = {'author', 'text'}
+        expected_fields = {'author_email', 'text'}
         assert set(serializer.data.keys()) == expected_fields
-        assert serializer.data['author'] == self.admin.id
+        assert serializer.data['author_email'] == self.admin.email
         assert serializer.data['text'] == 'test'
 
 
@@ -267,7 +267,7 @@ class TestTaskListUserSerializer:
         Тест на корректное отображение комментариев у задачи
         """
         serializer = create_serializer
-        assert serializer.data['comments'][0]['author'] == self.user.id
+        assert serializer.data['comments'][0]['author_email'] == self.user.email
         assert serializer.data['comments'][-1]['text'] == self.comments[0].text
 
 
@@ -296,7 +296,8 @@ class TestTaskListAdminSerializer:
         Тест на отображение полей
         """
         serializer = create_serializer
-        expected_fields = {'id', 'title', 'description', 'deadline', 'status', 'assigned_to', 'team', 'created_at',
+        expected_fields = {'id', 'title', 'description', 'deadline', 'status', 'assigned_to_email',
+                           'assigned_to_first_name', 'assigned_to_last_name', 'team_name', 'created_at',
                            'updated_at', 'comments'}
         assert set(serializer.data.keys()) == expected_fields
 
@@ -309,7 +310,7 @@ class TestTaskListAdminSerializer:
         assert serializer.data['title'] == self.task.title
         assert serializer.data['description'] == self.task.description
         assert serializer.data['status'] == self.task.status
-        assert serializer.data['team'] == self.team.id
+        assert serializer.data['team_name'] == self.team.name
         assert len(serializer.data['comments']) == len(self.comments)
 
     def test_list_comment_correct_info(self, create_serializer):
@@ -317,5 +318,5 @@ class TestTaskListAdminSerializer:
         Тест на корректное отображение комментариев у задачи
         """
         serializer = create_serializer
-        assert serializer.data['comments'][0]['author'] == self.admin.id
+        assert serializer.data['comments'][0]['author_email'] == self.admin.email
         assert serializer.data['comments'][-1]['text'] == self.comments[0].text

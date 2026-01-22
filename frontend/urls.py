@@ -16,4 +16,5 @@ urlpatterns = [
     path('teams/<int:team_id>/update/', views.teams_update, name='teams-update'),
     path('teams/detail/', views.teams_detail, name='teams-detail'),
     path('tasks/<int:team_id>/create/', views.tasks_create, name='tasks-create'),
+    path('tasks/admin-list/', views.tasks_admin_list, name='tasks-admin-list'),
 ]

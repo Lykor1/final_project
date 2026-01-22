@@ -24,7 +24,8 @@
             teamsChangeRole: "{% url 'frontend:teams-change-role' 0 %}",
             teamsUpdate: "{% url 'frontend:teams-update' 0 %}",
             teamsDetail: "{% url 'frontend:teams-detail' %}",
-            tasksCreate:"{% url 'frontend:tasks-create' 0 %}",
+            tasksCreate: "{% url 'frontend:tasks-create' 0 %}",
+            tasksAdminList:"{% url 'frontend:tasks-admin-list' %}",
 
             loginAPI: "{% url 'users:login' %}",
             logoutAPI: "{% url 'users:logout' %}",
@@ -38,7 +39,8 @@
             teamsDeleteAPI: "{% url 'teams:delete' 0 %}",
             teamsAddUserAPI: "{% url 'teams:add-user' 0 %}",
             teamsRemoveUserAPI: "{% url 'teams:remove-user' %}",
-            teamsDetailAPI:"{% url 'teams:detail' %}"
+            teamsDetailAPI: "{% url 'teams:detail' %}",
+            tasksAdminListAPI: "{% url 'tasks:admin-list' %}",
         }
     </script>
     <script defer src="{% static 'js/auth.js' %}"></script>

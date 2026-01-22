@@ -48,3 +48,6 @@ def teams_detail(request):
 def tasks_create(request, team_id):
     team = get_object_or_404(Team, pk=team_id)
     return render(request, 'tasks/create.html', {'team': team})
+
+def tasks_admin_list(request):
+    return render(request, 'tasks/admin_list.html')
