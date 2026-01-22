@@ -51,3 +51,6 @@ def tasks_create(request, team_id):
 
 def tasks_admin_list(request):
     return render(request, 'tasks/admin_list.html')
+
+def tasks_own_list(request):
+    return render(request, 'tasks/own_list.html')

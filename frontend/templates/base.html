@@ -26,6 +26,7 @@
             teamsDetail: "{% url 'frontend:teams-detail' %}",
             tasksCreate: "{% url 'frontend:tasks-create' 0 %}",
             tasksAdminList:"{% url 'frontend:tasks-admin-list' %}",
+            tasksOwnList:"{% url 'frontend:tasks-own-list' %}",
 
             loginAPI: "{% url 'users:login' %}",
             logoutAPI: "{% url 'users:logout' %}",
@@ -41,6 +42,7 @@
             teamsRemoveUserAPI: "{% url 'teams:remove-user' %}",
             teamsDetailAPI: "{% url 'teams:detail' %}",
             tasksAdminListAPI: "{% url 'tasks:admin-list' %}",
+            tasksOwnListAPI: "{% url 'tasks:own-list' %}",
         }
     </script>
     <script defer src="{% static 'js/auth.js' %}"></script>

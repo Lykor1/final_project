@@ -63,6 +63,7 @@ class CommentListSerializer(serializers.ModelSerializer):
         source='author.email',
         read_only=True,
     )
+
     class Meta:
         model = Comment
         fields = ('author_email', 'text')
@@ -70,12 +71,25 @@ class CommentListSerializer(serializers.ModelSerializer):
 
 
 class TaskListUserSerializer(serializers.ModelSerializer):
+    created_by_email = serializers.CharField(
+        source='created_by.email',
+        read_only=True,
+    )
+    created_by_first_name = serializers.CharField(
+        source='created_by.first_name',
+        read_only=True,
+    )
+    created_by_last_name = serializers.CharField(
+        source='created_by.last_name',
+        read_only=True,
+    )
     comments = CommentListSerializer(read_only=True, many=True, source='tasks')
     rank = serializers.IntegerField(read_only=True, allow_null=True)
 
     class Meta:
         model = Task
-        fields = ('title', 'description', 'deadline', 'status', 'created_by', 'rank', 'created_at', 'updated_at',
+        fields = ('title', 'description', 'deadline', 'status', 'created_by_email', 'created_by_first_name',
+                  'created_by_last_name', 'rank', 'created_at', 'updated_at',
                   'comments')
         read_only_fields = fields
 
