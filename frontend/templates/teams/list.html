@@ -79,7 +79,7 @@
                         <td>
                             <button onclick="deleteTeam(${team.id})">Удалить</button>
                             <hr>
-                            <button onclick="updateTeam(${team.id})">Редактировать</button>
+                            <a href="${URLS.teamsUpdate.replace('/0', `/${team.id}`)}">Редактировать</a>
                             <hr>
                             <a href="${URLS.teamsChangeRole.replace('/0', `/${team.id}`)}">Изменить роль пользователя</a>
                             <hr>
@@ -145,6 +145,7 @@
             location.reload()
         }
 
+        <!--
         async function updateTeam(teamId) {
             const newName = prompt('Новое название команды');
             if (!newName) return;
@@ -174,6 +175,7 @@
             alert('Команда обновлена');
             location.reload();
         }
+        -->
 
         async function removeUserFromTeam() {
             const emailInput = document.getElementById('remove-user-email');

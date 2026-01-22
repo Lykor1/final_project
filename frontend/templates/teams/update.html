@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Редактирование команды
+{% endblock %}
+
+{% block content %}
+    <h1>Редактирование команды <strong>{{ team.name }}</strong></h1>
+
+    <form id="team-update-form">
+        <div>
+            <label>Название</label><br>
+            <input type="text" id="name" value="{{ team.name }}" required minlength="3">
+        </div>
+        <div>
+            <label>Описание</label><br>
+            <textarea id="description">{{ team.description }}</textarea>
+        </div>
+
+        <button type="submit">Сохранить</button>
+        <a href="{% url 'frontend:teams-list' %}"></a>
+    </form>
+
+    <script>
+        const TEAM_UPDATE_API = "{% url 'teams:update' team.id %}";
+        document
+            .getElementById('team-update-form')
+            .addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const name = document.getElementById('name').value.trim();
+                const description = document.getElementById('description').value.trim();
+
+                if (!name) {
+                    alert('Название обязательно');
+                    return;
+                }
+
+                const response = await fetch(TEAM_UPDATE_API, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access')}`
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        description: description
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.detail || 'Ошибка обновления команды');
+                    return;
+                }
+
+                alert('Команда успешно обновлена');
+                window.location.href = "{% url 'frontend:teams-list' %}";
+            });
+    </script>
+{% endblock %}

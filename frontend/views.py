@@ -34,3 +34,7 @@ def teams_list(request):
 def teams_change_role(request, team_id):
     team = get_object_or_404(Team, pk=team_id)
     return render(request, 'teams/change_role.html', {'team': team})
+
+def teams_update(request, team_id):
+    team = get_object_or_404(Team, pk=team_id)
+    return render(request, 'teams/update.html', {'team': team})
