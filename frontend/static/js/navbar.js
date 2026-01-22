@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
         navbar.innerHTML = `
             <li><a href="${URLS.index}">Главная</a></li>
             <li><a href="${URLS.userDetail}">Профиль</a></li>
+            <li><a href="${URLS.teamsDetail}">Моя команда</a></li>
             <li><a href="#" id="logout-link">Выход</a></li>
         `;
 

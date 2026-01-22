@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Моя команда
+{% endblock %}
+
+{% block content %}
+    <h1>Моя команда</h1>
+
+    <div id="team-container">Загрузка...</div>
+
+    <script>
+        async function loadTeamDetail() {
+            const access = localStorage.getItem('access');
+
+            if (!access) {
+                document.getElementById('team-container').textContent = 'Вы не авторизованы';
+                return;
+            }
+
+            const response = await fetch(URLS.teamsDetailAPI, {
+                headers: {
+                    'Authorization': `Bearer ${access}`
+                }
+            });
+
+            if (response.status === 404) {
+                document.getElementById('team-container').textContent = 'Вы не состоите в команде';
+                return;
+            }
+
+            if (!response.ok) {
+                document.getElementById('team-container').textContent = 'Ошибка загрузки команды';
+                return;
+            }
+
+            const team = await response.json();
+
+            renderTeam(team);
+        }
+
+        function renderTeam(team) {
+            const members = team.members.length ? team.members.map(m => `
+                    <li><p><strong>Email:</strong> ${m.email}</p></li>
+                    <li><p><strong>ФИО:</strong> ${m.full_name}</p></li>
+                    <li><p><strong>Дата рождения:</strong> ${m.birthday ? new Date(m.birthday).toLocaleDateString() : '---'}</p></li>
+                    <li><p><strong>Возраст:</strong> ${m.age ?? '---'}</p></li>
+                    <li><p><strong>Роль:</strong> ${m.role}</p></li><br>
+                `).join('') : '<li>Участников нет</li>';
+
+            document.getElementById('team-container').innerHTML = `
+                <h2>${team.name}</h2>
+                <p>${team.description || 'Без описания'}</p>
+
+                <h3>Создатель</h3>
+                <p><strong>Email:</strong> ${team.creator.email}</p>
+                <p><strong>ФИО:</strong> ${team.creator.full_name}</p>
+                <p><strong>Дата рождения:</strong> ${team.creator.birthday ? new Date(team.creator.birthday).toLocaleDateString() : '---'}</p>
+                <p><strong>Возраст:</strong> ${team.creator.age ?? '---'}</p>
+                <p><strong>Роль:</strong> ${team.creator.role}</p>
+
+                <h3>Участники</h3>
+                <ul>${members}</ul>
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', loadTeamDetail);
+    </script>
+{% endblock %}
