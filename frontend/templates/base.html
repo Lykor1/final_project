@@ -44,7 +44,8 @@
             teamsDetailAPI: "{% url 'teams:detail' %}",
             tasksAdminListAPI: "{% url 'tasks:admin-list' %}",
             tasksOwnListAPI: "{% url 'tasks:own-list' %}",
-            tasksUpdateAPI: "{% url 'tasks:update' 0 0 %}"
+            tasksUpdateAPI: "{% url 'tasks:update' 0 0 %}",
+            tasksDeleteAPI:"{% url 'tasks:delete' 0 0 %}"
         }
     </script>
     <script defer src="{% static 'js/auth.js' %}"></script>

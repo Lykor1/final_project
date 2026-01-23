@@ -103,11 +103,45 @@
                         </td>
                         <td>
                             <a href="#" onclick="goToUpdateTask(${task.id}, ${task.team_id || 'unknown'}); return false;">Редактировать</a>
+                            <hr>
+                            <button onclick="deleteTask(${task.team_id}, ${task.id}, ${task.title})">Удалить</button>
                         </td>
                     </tr>
                 `);
             });
         });
+
+        async function deleteTask(teamId, taskId, title) {
+            if (!confirm(`Удалить задачу "${title}"?`)) {
+                return;
+            }
+
+            const deleteUrl = URLS.tasksDeleteAPI.replace('/0/0', `/${teamId}/${taskId}/`).replace('/0', `/${teamId}`).replace('/0', `/${taskId}`);
+
+            try {
+                const response = await fetchWithAuth(deleteUrl, {method: 'DELETE'});
+
+                if (response.status === 403) {
+                    alert('Недостаточно прав для удаления');
+                    return;
+                }
+
+                if (!response.ok) {
+                    alert('Ошибка при удалении задачи');
+                    return;
+                }
+
+                const row = document.querySelector(`tr[data-task-id="${taskId}"]`);
+                if (row) {
+                    row.remove();
+                }
+
+                alert('Задача удалена');
+            } catch (err) {
+                alert('Сетевая ошибка при удалении');
+                console.error(err);
+            }
+        }
 
         function goToUpdateTask(taskId, teamId) {
             if (teamId === 'unknown' || !teamId) {
