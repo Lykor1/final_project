@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Редактирование задачи
+{% endblock %}
+
+{% block content %}
+    <h1>Редактирование задачи "{{ task.title }}" команды "{{ task.team.name }}"</h1>
+
+    <form id="task-update-form">
+        <div>
+            <label>Название</label><br>
+            <input type="text" id="title" value="{{ task.title }}" required minlength="3">
+        </div>
+        <div>
+            <label>Описание</label><br>
+            <textarea id="description">{{ task.description }}</textarea>
+        </div>
+        <div>
+            <label>Срок исполнения</label><br>
+            <input type="datetime-local" id="deadline" value="{{ task.deadline|date:'Y-m-d\TH:i' }}" required>
+        </div>
+        <div>
+            <label>Статус</label><br>
+            <select id="status">
+                <option value="open" {% if task.status == 'open' %}selected{% endif %}>Открытая</option>
+                <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>В работе</option>
+                <option value="done" {% if task.status == 'done' %}selected{% endif %}>Выполнена</option>
+            </select>
+        </div>
+        <div>
+            <label>Исполнитель (email)</label><br>
+            <input type="email" id="assigned_to" value="{{ task.assigned_to.email|default:'' }}">
+        </div>
+        <button type="submit">Сохранить</button>
+        <a href="{% url 'frontend:tasks-admin-list' %}">Назад к списку</a>
+    </form>
+
+    <p id="error" style="color: red;"></p>
+    <p id="success" style="color: green;"></p>
+
+    <script>
+        const TASK_UPDATE_API = "{% url 'tasks:update' task.team.id task.id %}";
+
+        document.getElementById('task-update-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const deadline = document.getElementById('deadline').value;
+            const status = document.getElementById('status').value;
+            const assigned_to = document.getElementById('assigned_to').value.trim();
+
+            if (!title) {
+                alert('Название обязательно');
+                return;
+            }
+
+            if (!deadline) {
+                alert('Срок исполнения обязателен');
+                return;
+            }
+
+            if ((status === 'in_progress' || status === 'done') && !assigned_to) {
+                alert('Для статуса "В работе" или "Выполнена" укажите исполнителя');
+                return;
+            }
+
+            const payload = {
+                title: title,
+                description: description || "",
+                deadline: deadline,
+                status: status
+            };
+
+            if (assigned_to) {
+                payload.assigned_to = assigned_to;
+            }
+
+            const response = await fetch(TASK_UPDATE_API, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('access')}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.detail || 'Ошибка обновления задачи');
+                return;
+            }
+
+            alert('Задача успешно обновлена');
+            window.location.href = "{% url 'frontend:tasks-admin-list' %}";
+        });
+    </script>
+{% endblock %}

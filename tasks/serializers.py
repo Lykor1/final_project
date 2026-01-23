@@ -115,11 +115,16 @@ class TaskListAdminSerializer(serializers.ModelSerializer):
         read_only=True,
         allow_null=True,
     )
+    team_id = serializers.CharField(
+        source='team.id',
+        read_only=True,
+        allow_null=True,
+    )
     comments = CommentListSerializer(read_only=True, many=True, source='tasks')
 
     class Meta:
         model = Task
         fields = ('id', 'title', 'description', 'deadline', 'status', 'assigned_to_email', 'assigned_to_first_name',
-                  'assigned_to_last_name', 'team_name', 'created_at', 'updated_at',
+                  'assigned_to_last_name', 'team_id', 'team_name', 'created_at', 'updated_at',
                   'comments')
         read_only_fields = fields

@@ -102,11 +102,23 @@
                             ${commentsHtml}
                         </td>
                         <td>
-                            <a href="#" onclick="alert('Детальная страница задачи пока не реализована (ID: ${task.id})'); return false;">Просмотр</a>
+                            <a href="#" onclick="goToUpdateTask(${task.id}, ${task.team_id || 'unknown'}); return false;">Редактировать</a>
                         </td>
                     </tr>
                 `);
             });
         });
+
+        function goToUpdateTask(taskId, teamId) {
+            if (teamId === 'unknown' || !teamId) {
+                alert('Не удалось определить ID команды задачи');
+                return;
+            }
+
+            window.location.href = URLS.tasksUpdate
+                .replace('/0/0', `/${teamId}/${taskId}/`)
+                .replace('/0', `/${teamId}`)
+                .replace('/0', `/${taskId}`);
+        }
     </script>
 {% endblock %}

@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 
+from tasks.models import Task
 from teams.models import Team
 
 
@@ -49,8 +50,15 @@ def tasks_create(request, team_id):
     team = get_object_or_404(Team, pk=team_id)
     return render(request, 'tasks/create.html', {'team': team})
 
+
 def tasks_admin_list(request):
     return render(request, 'tasks/admin_list.html')
 
+
 def tasks_own_list(request):
     return render(request, 'tasks/own_list.html')
+
+
+def tasks_update(request, team_id, pk):
+    task = get_object_or_404(Task, pk=pk, team=team_id)
+    return render(request, 'tasks/update.html', {'task': task})

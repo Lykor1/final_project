@@ -111,7 +111,7 @@ class TestTaskUpdateSerializer:
             'description': 'new description',
             'deadline': timezone.now() + timezone.timedelta(days=7),
             'status': Task.Status.IN_PROGRESS,
-            'assigned_to': self.new_user.id
+            'assigned_to': self.new_user.email
         }
 
     def test_update_task_success(self):
@@ -298,7 +298,7 @@ class TestTaskListAdminSerializer:
         """
         serializer = create_serializer
         expected_fields = {'id', 'title', 'description', 'deadline', 'status', 'assigned_to_email',
-                           'assigned_to_first_name', 'assigned_to_last_name', 'team_name', 'created_at',
+                           'assigned_to_first_name', 'assigned_to_last_name', 'team_id','team_name', 'created_at',
                            'updated_at', 'comments'}
         assert set(serializer.data.keys()) == expected_fields
 
