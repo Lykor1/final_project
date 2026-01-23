@@ -105,6 +105,12 @@
                             <a href="#" onclick="goToUpdateTask(${task.id}, ${task.team_id || 'unknown'}); return false;">Редактировать</a>
                             <hr>
                             <button onclick="deleteTask(${task.team_id}, ${task.id}, ${task.title})">Удалить</button>
+                            <hr>
+                            <div>
+                                <input type="text" placeholder="Комментарий" id="add-comment-admin-${task.id}"
+                                style="width: 200px">
+                                <button onclick="addComment(${task.id})">Добавить</button>
+                            </div>
                         </td>
                     </tr>
                 `);
@@ -153,6 +159,36 @@
                 .replace('/0/0', `/${teamId}/${taskId}/`)
                 .replace('/0', `/${teamId}`)
                 .replace('/0', `/${taskId}`);
+        }
+
+        async function addComment(taskId) {
+            const input = document.getElementById(`add-comment-admin-${taskId}`);
+            const comment = input.value.trim();
+
+            if (!comment) {
+                alert('Введите комментарий');
+                return;
+            }
+
+            const response = await fetchWithAuth(
+                URLS.tasksAddCommentAPI.replace('/0', `/${taskId}`),
+                {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text: comment})
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.detail || 'Ошибка добавления комментария');
+                return;
+            }
+
+            alert('Комментарий успешно добавлен');
+            input.value = '';
+            location.reload()
         }
     </script>
 {% endblock %}

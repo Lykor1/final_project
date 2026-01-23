@@ -248,7 +248,8 @@ class TestTaskListUserSerializer:
         Тест на отображение полей
         """
         serializer = create_serializer
-        expected_fields = {'title', 'description', 'deadline', 'status', 'created_by_email', 'created_by_first_name',
+        expected_fields = {'id', 'title', 'description', 'deadline', 'status', 'created_by_email',
+                           'created_by_first_name',
                            'created_by_last_name', 'rank', 'created_at',
                            'updated_at', 'comments'}
         assert set(serializer.data.keys()) == expected_fields
@@ -298,7 +299,7 @@ class TestTaskListAdminSerializer:
         """
         serializer = create_serializer
         expected_fields = {'id', 'title', 'description', 'deadline', 'status', 'assigned_to_email',
-                           'assigned_to_first_name', 'assigned_to_last_name', 'team_id','team_name', 'created_at',
+                           'assigned_to_first_name', 'assigned_to_last_name', 'team_id', 'team_name', 'created_at',
                            'updated_at', 'comments'}
         assert set(serializer.data.keys()) == expected_fields
 

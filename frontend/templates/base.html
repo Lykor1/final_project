@@ -25,9 +25,9 @@
             teamsUpdate: "{% url 'frontend:teams-update' 0 %}",
             teamsDetail: "{% url 'frontend:teams-detail' %}",
             tasksCreate: "{% url 'frontend:tasks-create' 0 %}",
-            tasksAdminList:"{% url 'frontend:tasks-admin-list' %}",
-            tasksOwnList:"{% url 'frontend:tasks-own-list' %}",
-            tasksUpdate:"{% url 'frontend:tasks-update' 0 0 %}",
+            tasksAdminList: "{% url 'frontend:tasks-admin-list' %}",
+            tasksOwnList: "{% url 'frontend:tasks-own-list' %}",
+            tasksUpdate: "{% url 'frontend:tasks-update' 0 0 %}",
 
             loginAPI: "{% url 'users:login' %}",
             logoutAPI: "{% url 'users:logout' %}",
@@ -45,7 +45,8 @@
             tasksAdminListAPI: "{% url 'tasks:admin-list' %}",
             tasksOwnListAPI: "{% url 'tasks:own-list' %}",
             tasksUpdateAPI: "{% url 'tasks:update' 0 0 %}",
-            tasksDeleteAPI:"{% url 'tasks:delete' 0 0 %}"
+            tasksDeleteAPI: "{% url 'tasks:delete' 0 0 %}",
+            tasksAddCommentAPI: "{% url 'tasks:add-comment' 0 %}",
         }
     </script>
     <script defer src="{% static 'js/auth.js' %}"></script>

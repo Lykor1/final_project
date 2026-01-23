@@ -91,11 +91,45 @@
                             ${commentsHtml}
                         </td>
                         <td>
-                            <a href="#" onclick="alert('Детальная страница задачи пока не реализована (ID: ${task.id})'); return false;">Просмотр</a>
+                            <div>
+                                <input type="text" placeholder="Комментарий" id="add-comment-own-${task.id}"
+                                style="width: 200px">
+                                <button onclick="addComment(${task.id})">Добавить</button>
+                            </div>
                         </td>
                     </tr>
                 `);
             });
         });
+
+        async function addComment(taskId) {
+            const input = document.getElementById(`add-comment-own-${taskId}`);
+            const comment = input.value.trim();
+
+            if (!comment) {
+                alert('Введите комментарий');
+                return;
+            }
+
+            const response = await fetchWithAuth(
+                URLS.tasksAddCommentAPI.replace('/0', `/${taskId}`),
+                {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text: comment})
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.detail || 'Ошибка добавления комментария');
+                return;
+            }
+
+            alert('Комментарий успешно добавлен');
+            input.value = '';
+            location.reload()
+        }
     </script>
 {% endblock %}
