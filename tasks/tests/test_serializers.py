@@ -299,8 +299,8 @@ class TestTaskListAdminSerializer:
         """
         serializer = create_serializer
         expected_fields = {'id', 'title', 'description', 'deadline', 'status', 'assigned_to_email',
-                           'assigned_to_first_name', 'assigned_to_last_name', 'team_id', 'team_name', 'created_at',
-                           'updated_at', 'comments'}
+                           'assigned_to_first_name', 'assigned_to_last_name', 'team_id', 'team_name', 'rank',
+                           'created_at', 'updated_at', 'comments'}
         assert set(serializer.data.keys()) == expected_fields
 
     def test_list_task_correct_info(self, create_serializer):

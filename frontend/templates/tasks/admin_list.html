@@ -17,6 +17,7 @@
             <th>Срок</th>
             <th>Статус</th>
             <th>Исполнитель</th>
+            <th>Оценка</th>
             <th>Создано</th>
             <th>Комментарии</th>
             <th>Действия</th>
@@ -88,6 +89,18 @@
                     'done': 'Выполнена'
                 }[task.status] || task.status;
 
+                const rankDisplay = task.rank !== null && task.rank !== undefined ? `Оценено: ${task.rank}`
+                    : (task.status === 'done' ? `
+                        <select id="eval-rank-${task.id}">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                        <button onclick="createEvaluation(${task.id})">Оценить</button>
+                    ` : 'Нельзя оценить');
+
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr data-task-id="${task.id}">
                         <td>${task.id}</td>
@@ -97,6 +110,7 @@
                         <td>${deadline}</td>
                         <td>${statusText}</td>
                         <td>${assigned}</td>
+                        <td>${rankDisplay}</td>
                         <td>${createdAt}</td>
                         <td style="max-width: 200px; overflow: hidden;">
                             ${commentsHtml}
@@ -189,6 +203,51 @@
             alert('Комментарий успешно добавлен');
             input.value = '';
             location.reload()
+        }
+
+        async function createEvaluation(taskId) {
+            const select = document.getElementById(`eval-rank-${taskId}`);
+            if (!select) return;
+
+            const rank = parseInt(select.value);
+            if (!rank || rank < 1 || rank > 5) {
+                alert('Выберите оценку от 1 до 5');
+                return;
+            }
+
+            const apiUrl = URLS.evaluationsCreateAPI.replace('/0', `/${taskId}`);
+
+            try {
+                const response = await fetchWithAuth(apiUrl, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({rank: rank})
+                });
+
+                if (response.status === 403) {
+                    alert('Недостаточно прав для оценки');
+                    return;
+                }
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    alert(data.detail || data.task?.[0] || 'Ошибка при сохранении оценки');
+                    return;
+                }
+
+                const row = document.querySelector(`tr[data-task-id="${taskId}"]`);
+                if (row) {
+                    const evalCell = row.querySelector('td:nth-child(8)');
+                    if (evalCell) {
+                        evalCell.innerHTML = `Оценено: ${rank}`;
+                    }
+                }
+
+                alert('Оценка поставлена');
+            } catch (err) {
+                alert('Ошибка сети');
+                console.error(err);
+            }
         }
     </script>
 {% endblock %}

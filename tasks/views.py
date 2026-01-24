@@ -142,6 +142,7 @@ class TaskListAdminView(ListAPIView):
                     queryset=Comment.objects.only('id', 'text', 'author').select_related('author')
                 )
             )
+            .annotate(rank=F('task_evaluation__rank'))
             .only(
                 'id',
                 'title',

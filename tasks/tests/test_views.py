@@ -490,8 +490,8 @@ class TestTaskListAdminView:
         assert response.status_code == 200
         assert len(response.data) == len(self.tasks)
         assert response.data[0]['title'] == task_data['title']
-        assert response.data[1]['assigned_to'] == self.user.id
-        assert response.data[2]['team'] == self.team.id
+        assert response.data[1]['assigned_to_email'] == self.user.email
+        assert response.data[2]['team_name'] == self.team.name
 
     def test_list_task_admin_comments(self):
         """
@@ -501,7 +501,7 @@ class TestTaskListAdminView:
         response = self.client.get(self.url)
         assert response.status_code == 200
         assert len(response.data[0]['comments']) == len(self.comments) / len(self.tasks)
-        assert response.data[0]['comments'][0]['author'] == self.admin.id
+        assert response.data[0]['comments'][0]['author_email'] == self.admin.email
         assert response.data[1]['comments'][-1]['text'] == 'test 0'
 
     def test_list_task_admin_not_tasks(self, create_superuser, admin_user_data):
