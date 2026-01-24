@@ -28,6 +28,7 @@
             tasksAdminList: "{% url 'frontend:tasks-admin-list' %}",
             tasksOwnList: "{% url 'frontend:tasks-own-list' %}",
             tasksUpdate: "{% url 'frontend:tasks-update' 0 0 %}",
+            meetingsCreate: "{% url 'frontend:meetings-create' %}",
 
             loginAPI: "{% url 'users:login' %}",
             logoutAPI: "{% url 'users:logout' %}",
@@ -48,7 +49,8 @@
             tasksDeleteAPI: "{% url 'tasks:delete' 0 0 %}",
             tasksAddCommentAPI: "{% url 'tasks:add-comment' 0 %}",
             evaluationsCreateAPI: "{% url 'evaluations:create' 0 %}",
-            evaluationsDeleteAPI:"{% url 'evaluations:delete' 0 %}",
+            evaluationsDeleteAPI: "{% url 'evaluations:delete' 0 %}",
+            meetingsCreateAPI: "{% url 'meetings:create' %}",
         }
     </script>
     <script defer src="{% static 'js/auth.js' %}"></script>

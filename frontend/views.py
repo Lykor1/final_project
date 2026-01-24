@@ -62,3 +62,6 @@ def tasks_own_list(request):
 def tasks_update(request, team_id, pk):
     task = get_object_or_404(Task, pk=pk, team=team_id)
     return render(request, 'tasks/update.html', {'task': task})
+
+def meetings_create(request):
+    return render(request, 'meetings/create.html')

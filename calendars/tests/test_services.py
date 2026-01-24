@@ -29,7 +29,7 @@ class TestGetCalendarData:
             )
             self.meeting_past = create_meeting(
                 creator=self.admin,
-                topic='past meeting',
+                topic='past meetings',
                 date=timezone.now().date() + timedelta(days=1),
                 start_time=meeting_data['start_time'],
                 end_time=meeting_data['end_time'],
@@ -44,7 +44,7 @@ class TestGetCalendarData:
         data = CalendarService.get_calendar_data(user=self.user, date_str=future_date_str)
         assert data['period'] == future_date_str
         assert data['count'] == 2
-        assert data['events'][0]['type'] == 'meeting'
+        assert data['events'][0]['type'] == 'meetings'
         assert not data['events'][0]['is_past']
 
     def test_get_calendar_data_range_success(self):

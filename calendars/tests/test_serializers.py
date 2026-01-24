@@ -73,7 +73,7 @@ class TestCalendarMeetingSerializer:
         Тест на корректное отображение данных встречи
         """
         serializer = CalendarMeetingSerializer(instance=self.meeting)
-        assert serializer.data['type'] == 'meeting'
+        assert serializer.data['type'] == 'meetings'
         assert serializer.data['topic'] == self.meeting.topic
         assert serializer.data['time'] == self.meeting.full_start_time
         assert not serializer.data['is_past']

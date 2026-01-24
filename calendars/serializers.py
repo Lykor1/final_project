@@ -45,7 +45,7 @@ class CalendarMeetingSerializer(CalendarSerializer):
         read_only_fields = fields
 
     def get_type(self, obj):
-        return 'meeting'
+        return 'meetings'
 
     def get_is_past(self, obj):
         return obj.full_end_time < timezone.now()
