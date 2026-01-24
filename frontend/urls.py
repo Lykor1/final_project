@@ -20,4 +20,5 @@ urlpatterns = [
     path('tasks/own-list/', views.tasks_own_list, name='tasks-own-list'),
     path('tasks/<int:team_id>/update/<int:pk>/', views.tasks_update, name='tasks-update'),
     path('meetings/create/', views.meetings_create, name='meetings-create'),
+    path('meetings/list/', views.meetings_list, name='meetings-list'),
 ]

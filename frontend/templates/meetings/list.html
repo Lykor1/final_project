@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Список встреч
+{% endblock %}
+
+{% block content %}
+    <h1>Список встреч</h1>
+
+    <table border="1" cellpadding="6" style="width: 100%;border-collapse: collapse;">
+        <thead>
+        <tr>
+            <th>Тема</th>
+            <th>Дата</th>
+            <th>Время начала</th>
+            <th>Время окончания</th>
+            <th>Создатель</th>
+            <th>Участники</th>
+        </tr>
+        </thead>
+        <tbody id="meetings-body">
+        <tr>
+            <td colspan="6">Загрузка...</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p id="error" style="color: red"></p>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!Auth.isAuthenticated()) {
+                window.location.href = URLS.login;
+                return;
+            }
+
+            const response = await fetchWithAuth(URLS.meetingsListAPI);
+
+            if (!response.ok) {
+                document.getElementById('error').textContent = 'Ошибка загрузки списка встреч';
+                document.getElementById('meetings-body').innerHTML = '';
+                return;
+            }
+
+            const meetings = await response.json();
+            const tbody = document.getElementById('meetings-body');
+            tbody.innerHTML = '';
+
+            if (!meetings.length) {
+                tbody.innerHTML = '<tr><td colspan="6">Встречи не найдены</td></tr>';
+                return;
+            }
+
+            meetings.forEach(meeting => {
+                const date = new Date(meeting.date).toLocaleDateString();
+                const startTime = meeting.start_time ? meeting.start_time.substring(0, 5) : '---';
+                const endTime = meeting.end_time ? meeting.end_time.substring(0, 5) : '---';
+
+                const creator = meeting.creator || '---';
+
+                const membersList = !(meeting.members && meeting.members.length > 0) ? 'Только создатель' : meeting.members.map(m => `
+                    <p><strong>Email:</strong> ${m.email}</p>
+                    <p><strong>ФИО:</strong> ${m.full_name}</p>
+                    <p><strong>Возраст:</strong> ${m.age || '---'}</p>
+                    <p><strong>Роль:</strong> ${m.role}</p>
+                    <p><strong>Команда:</strong> ${m.team_name || '---'}</p>
+                    <br>
+                `).join('');
+
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr>
+                        <td>${meeting.topic}</td>
+                        <td>${date}</td>
+                        <td>${startTime}</td>
+                        <td>${endTime}</td>
+                        <td>${creator}</td>
+                        <td>${membersList}</td>
+                    </tr>
+                `);
+            });
+        });
+    </script>
+{% endblock %}

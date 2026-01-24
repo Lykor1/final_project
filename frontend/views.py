@@ -65,3 +65,6 @@ def tasks_update(request, team_id, pk):
 
 def meetings_create(request):
     return render(request, 'meetings/create.html')
+
+def meetings_list(request):
+    return render(request, 'meetings/list.html')
