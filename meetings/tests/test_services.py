@@ -129,8 +129,8 @@ class TestUpdateMeeting:
             completed_meet = Meeting.objects.create(
                 topic=meeting_data['topic'],
                 date=timezone.now().date(),
-                start_time=meeting_data['start_time'],
-                end_time=meeting_data['end_time'],
+                start_time=(timezone.now() + timedelta(hours=5)).time(),
+                end_time=(timezone.now() + timedelta(hours=6)).time(),
                 creator=self.admin,
             )
         with pytest.raises(ValidationError) as e:

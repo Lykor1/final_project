@@ -16,7 +16,7 @@ class TestTaskCreateView:
         self.url = reverse('tasks:create', kwargs={'team_id': self.team.id})
         self.user = create_user(team=self.team, **user_data)
         self.client = client
-        task_data['assigned_to'] = self.user.id
+        task_data['assigned_to'] = self.user.email
 
     def test_create_task_success(self, task_data):
         """
@@ -136,7 +136,7 @@ class TestTaskUpdateView:
             'description': 'new description',
             'deadline': timezone.now() + timezone.timedelta(days=10),
             'status': 'in_progress',
-            'assigned_to': self.user.id,
+            'assigned_to': self.user.email,
         }
         self.client = client
         self.url = reverse('tasks:update', kwargs={'team_id': team.id, 'pk': self.task.pk})
@@ -432,7 +432,7 @@ class TestTaskListOwnView:
         assert response.status_code == 200
         assert len(response.data) == len(self.tasks)
         assert response.data[0]['title'] == task_data['title']
-        assert response.data[1]['created_by'] == self.admin.id
+        assert response.data[1]['created_by_email'] == self.admin.email
 
     def test_list_task_own_comments(self):
         """
@@ -442,7 +442,7 @@ class TestTaskListOwnView:
         response = self.client.get(self.url)
         assert response.status_code == 200
         assert len(response.data[0]['comments']) == len(self.comments) / len(self.tasks)
-        assert response.data[0]['comments'][0]['author'] == self.user.id
+        assert response.data[0]['comments'][0]['author_email'] == self.user.email
         assert response.data[1]['comments'][-1]['text'] == 'test 0'
 
     def test_list_task_own_not_tasks(self):

@@ -154,7 +154,7 @@ class TestMeetingListSerializer:
         Тест на правильное отображение полей
         """
         serializer = create_serializer
-        expected_keys = {'topic', 'date', 'start_time', 'end_time', 'creator', 'members'}
+        expected_keys = {'id', 'topic', 'date', 'start_time', 'end_time', 'creator', 'members'}
         assert set(serializer.data.keys()) == expected_keys
 
     def test_list_meeting_data(self, create_serializer):
