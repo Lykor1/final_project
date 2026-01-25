@@ -48,7 +48,7 @@ class MeetingListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Meeting
-        fields = ('topic', 'date', 'start_time', 'end_time', 'creator', 'members')
+        fields = ('id', 'topic', 'date', 'start_time', 'end_time', 'creator', 'members')
 
     def get_creator(self, obj):
         return f'{obj.creator.first_name.strip()} {obj.creator.last_name.strip()}'

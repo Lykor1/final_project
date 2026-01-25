@@ -16,6 +16,7 @@
             <th>Время окончания</th>
             <th>Создатель</th>
             <th>Участники</th>
+            <th>Действия</th>
         </tr>
         </thead>
         <tbody id="meetings-body">
@@ -52,6 +53,7 @@
             }
 
             meetings.forEach(meeting => {
+                console.log('Рендер встречи:', meeting);
                 const date = new Date(meeting.date).toLocaleDateString();
                 const startTime = meeting.start_time ? meeting.start_time.substring(0, 5) : '---';
                 const endTime = meeting.end_time ? meeting.end_time.substring(0, 5) : '---';
@@ -75,9 +77,17 @@
                         <td>${endTime}</td>
                         <td>${creator}</td>
                         <td>${membersList}</td>
+                        <td>
+                            <a href="#" onclick="goToUpdateMeeting(${meeting.id}); return false;">Редактировать</a>
+                        </td>
                     </tr>
                 `);
             });
         });
+
+        function goToUpdateMeeting(meetingId) {
+            console.log(meetingId);
+            window.location.href = URLS.meetingsUpdate.replace('/0', `/${meetingId}`);
+        }
     </script>
 {% endblock %}

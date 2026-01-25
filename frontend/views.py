@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 
+from meetings.models import Meeting
 from tasks.models import Task
 from teams.models import Team
 
@@ -68,3 +69,7 @@ def meetings_create(request):
 
 def meetings_list(request):
     return render(request, 'meetings/list.html')
+
+def meetings_update(request, pk):
+    meeting = get_object_or_404(Meeting, pk=pk)
+    return render(request, 'meetings/update.html', {'meeting': meeting})

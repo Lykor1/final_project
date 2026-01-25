@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Редактирование встречи
+{% endblock %}
+
+{% block content %}
+    <h1>Редактирование встречи</h1>
+
+    <form id="meeting-update-form">
+        <div>
+            <label>Тема</label><br>
+            <input type="text" id="topic" value="{{ meeting.topic }}" required minlength="3">
+        </div>
+        <div>
+            <label>Дата</label><br>
+            <input type="date" id="date" value="{{ meeting.date|date:'Y-m-d' }}" required>
+        </div>
+        <div>
+            <label>Время начала</label><br>
+            <input type="time" id="start_time" value="{{ meeting.start_time|time:'H:i' }}" required>
+        </div>
+        <div>
+            <label>Время окончания</label><br>
+            <input type="time" id="end_time" value="{{ meeting.end_time|time:'H:i' }}" required>
+        </div>
+        <div>
+            <label>Участники (email через запятую)</label><br>
+            <input type="text" id="members" value="{% for m in meeting.members.all %}{{ m.email }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+                   placeholder="email1@example.com, email2@example.com,...">
+        </div>
+
+        <button type="submit">Сохранить</button>
+        <a href="{% url 'frontend:meetings-list' %}">Назад</a>
+    </form>
+
+    <script>
+        const MEETING_UPDATE_API = "{% url 'meetings:update' meeting.pk %}";
+
+        document.getElementById('meeting-update-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const topic = document.getElementById('topic').value.trim();
+            const date = document.getElementById('date').value;
+            const start_time = document.getElementById('start_time').value;
+            const end_time = document.getElementById('end_time').value;
+            const membersStr = document.getElementById('members').value.trim();
+
+            if (!topic || !date || !start_time || !end_time) {
+                alert('Заполните все обязательные поля');
+                return;
+            }
+
+            const members = membersStr ? membersStr.split(',').map(m => m.trim()).filter(Boolean) : [];
+
+            const payload = {
+                topic: topic,
+                date: date,
+                start_time: start_time,
+                end_time: end_time,
+                members: members
+            };
+
+            const response = await fetch(MEETING_UPDATE_API, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('access')}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.detail || 'Ошибка обновления встречи');
+                return;
+            }
+
+            alert('Встреча успешно обновлена');
+            window.location.href = "{% url 'frontend:meetings-list' %}";
+        });
+    </script>
+{% endblock %}
