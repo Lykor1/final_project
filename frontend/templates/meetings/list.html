@@ -35,6 +35,12 @@
                 return;
             }
 
+            const payload = getJwtPayload();
+            const isAdmin = payload && payload.role === 'admin';
+            if (!isAdmin) {
+                document.getElementById('meetings-body').innerHTML = '<tr><td colspan="7">У вас нет прав на просмотр действий</td></tr>';
+            }
+
             const response = await fetchWithAuth(URLS.meetingsListAPI);
 
             if (!response.ok) {
@@ -53,7 +59,6 @@
             }
 
             meetings.forEach(meeting => {
-                console.log('Рендер встречи:', meeting);
                 const date = new Date(meeting.date).toLocaleDateString();
                 const startTime = meeting.start_time ? meeting.start_time.substring(0, 5) : '---';
                 const endTime = meeting.end_time ? meeting.end_time.substring(0, 5) : '---';
@@ -69,6 +74,15 @@
                     <br>
                 `).join('');
 
+                let actionsHtml = '';
+                if (isAdmin) {
+                    actionsHtml = `
+                        <button onclick="goToUpdateMeeting(${meeting.id}); return false;">Редактировать</button>
+                        <hr>
+                        <button onclick="deleteMeeting(${meeting.id}, '${meeting.topic}')">Удалить</button>
+                    `;
+                }
+
                 tbody.insertAdjacentHTML('beforeend', `
                     <tr>
                         <td>${meeting.topic}</td>
@@ -77,9 +91,7 @@
                         <td>${endTime}</td>
                         <td>${creator}</td>
                         <td>${membersList}</td>
-                        <td>
-                            <a href="#" onclick="goToUpdateMeeting(${meeting.id}); return false;">Редактировать</a>
-                        </td>
+                        <td>${actionsHtml}</td>
                     </tr>
                 `);
             });
@@ -88,6 +100,38 @@
         function goToUpdateMeeting(meetingId) {
             console.log(meetingId);
             window.location.href = URLS.meetingsUpdate.replace('/0', `/${meetingId}`);
+        }
+
+        async function deleteMeeting(meetingId, topic) {
+            if (!confirm(`Удалить встречу "${topic}"?`)) {
+                return;
+            }
+
+            const deleteUrl = URLS.meetingsDeleteAPI.replace('/0', `/${meetingId}`);
+
+            try {
+                const response = await fetchWithAuth(deleteUrl, {method: 'DELETE'});
+
+                if (response.status === 403) {
+                    alert('Недостаточно прав для удаления');
+                    return;
+                }
+
+                if (!response.ok) {
+                    alert('Ошибка при удалении встречи');
+                    return;
+                }
+
+                const row = document.querySelector(`tr[data-meeting-id="${meetingId}"]`);
+                if (row) {
+                    row.remove();
+                }
+                alert('Встреча удалена');
+                location.reload()
+            } catch (err) {
+                alert('Сетевая ошибка при удалении');
+                console.error(err);
+            }
         }
     </script>
 {% endblock %}
