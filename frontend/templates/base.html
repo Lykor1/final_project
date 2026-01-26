@@ -31,6 +31,7 @@
             meetingsCreate: "{% url 'frontend:meetings-create' %}",
             meetingsList: "{% url 'frontend:meetings-list' %}",
             meetingsUpdate: "{% url 'frontend:meetings-update' 0 %}",
+            calendarsList: "{% url 'frontend:calendars-list' %}",
 
             loginAPI: "{% url 'users:login' %}",
             logoutAPI: "{% url 'users:logout' %}",
@@ -56,6 +57,7 @@
             meetingsListAPI: "{% url 'meetings:list' %}",
             meetingsUpdateAPI: "{% url 'meetings:update' 0 %}",
             meetingsDeleteAPI: "{% url 'meetings:delete' 0 %}",
+            calendarsListAPI: "{% url 'calendars:calendar' %}"
         }
     </script>
     <script defer src="{% static 'js/auth.js' %}"></script>

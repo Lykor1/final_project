@@ -73,3 +73,6 @@ def meetings_list(request):
 def meetings_update(request, pk):
     meeting = get_object_or_404(Meeting, pk=pk)
     return render(request, 'meetings/update.html', {'meeting': meeting})
+
+def calendars_list(request):
+    return render(request, 'calendars/list.html')

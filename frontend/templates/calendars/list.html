@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Календарь
+{% endblock %}
+
+{% block content %}
+    <h1>Календарь</h1>
+
+    <form id="calendar-filter-form">
+        <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+            <div>
+                <label>Одна дата</label><br>
+                <input type="date" id="single-date">
+            </div>
+            <div style="font-weight: bold;">ИЛИ</div>
+            <div>
+                <label>Диапазон</label><br>
+                <input type="date" id="start-date"> -
+                <input type="date" id="end-date">
+            </div>
+            <div>
+                <button type="submit">Показать</button>
+            </div>
+        </div>
+    </form>
+
+    <div id="result-info"></div>
+
+    <h2 id="tasks-header" style="display: none;">Задачи</h2>
+    <table id="tasks-table" border="1" cellpadding="6" style="width: 100%; border-collapse: collapse; display: none;">
+        <thead>
+        <tr>
+            <th>Название</th>
+            <th>Дедлайн</th>
+            <th>Статус</th>
+            <th>Исполнитель</th>
+            <th>Автор</th>
+            <th>Команда</th>
+        </tr>
+        </thead>
+        <tbody id="tasks-body"></tbody>
+    </table>
+
+    <h2 id="meetings-header" style="display: none; margin-top: 40px;">Встречи</h2>
+    <table id="meetings-table" border="1" cellpadding="6"
+           style="width: 100%; border-collapse: collapse; display: none;">
+        <thead>
+        <tr>
+            <th>Тема</th>
+            <th>Дата</th>
+            <th>Начало</th>
+            <th>Окончание</th>
+            <th>Создатель</th>
+            <th>Участники</th>
+        </tr>
+        </thead>
+        <tbody id="meetings-body"></tbody>
+    </table>
+
+    <p id="error" style="color: red; margin-top: 16px;"></p>
+
+    <script>
+        document.getElementById('calendar-filter-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const singleDate = document.getElementById('single-date').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+
+            let url = URLS.calendarsListAPI + '?';
+
+            if (singleDate) {
+                url += `date=${singleDate}`;
+            } else if (startDate && endDate) {
+                url += `start=${startDate}&end=${endDate}`;
+            } else {
+                document.getElementById('error').textContent = 'Выберите либо одну дату, либо диапазон';
+                return;
+            }
+
+            document.getElementById('error').textContent = '';
+            document.getElementById('result-info').textContent = 'Загрузка...';
+
+            document.getElementById('tasks-header').style.display = 'none';
+            document.getElementById('tasks-table').style.display = 'none';
+            document.getElementById('meetings-header').style.display = 'none';
+            document.getElementById('meetings-table').style.display = 'none';
+
+            try {
+                const response = await fetchWithAuth(url);
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    document.getElementById('error').textContent = data.detail || 'Ошибка загрузки календаря';
+                    document.getElementById('result-info').textContent = '';
+                    return;
+                }
+
+                const data = await response.json();
+
+                document.getElementById('result-info').textContent = `События за ${data.period} (всего: ${data.count})`;
+
+                const tasks = data.events.filter(e => e.type === 'task');
+                const meetings = data.events.filter(e => e.type === 'meetings');
+
+                const tasksBody = document.getElementById('tasks-body');
+                tasksBody.innerHTML = '';
+                if (tasks.length > 0) {
+                    document.getElementById('tasks-header').style.display = 'block';
+                    document.getElementById('tasks-table').style.display = 'table';
+
+                    tasks.forEach(task => {
+                        const deadline = task.deadline ? new Date(task.deadline).toLocaleString() : '---';
+                        const statusText = task.status === 'done' ? 'Выполнена' : task.status === 'in_progress' ? 'В работе' : 'Открытая';
+                        const assigned = task.assigned_to || '---';
+                        const author = task.created_by || '---';
+                        const team = task.team || '---';
+                        const rowStyle = task.is_past ? 'style="background-color: #ffcccc;"' : '';
+
+                        tasksBody.insertAdjacentHTML('beforeend', `
+                            <tr ${rowStyle}>
+                                <td>${task.title}</td>
+                                <td>${deadline}</td>
+                                <td>${statusText}</td>
+                                <td>${assigned}</td>
+                                <td>${author}</td>
+                                <td>${team}</td>
+                            </tr>
+                        `);
+                    });
+                } else {
+                    tasksBody.innerHTML = '<tr><td colspan="7">Нет задач в периоде</td></tr>';
+                }
+
+                const meetingsBody = document.getElementById('meetings-body');
+                meetingsBody.innerHTML = '';
+                if (meetings.length > 0) {
+                    document.getElementById('meetings-header').style.display = 'block';
+                    document.getElementById('meetings-table').style.display = 'table';
+
+                    meetings.forEach(meeting => {
+                        const date = meeting.date ? new Date(meeting.date).toLocaleDateString() : '---';
+                        const start = meeting.start_time ? meeting.start_time.substring(0, 5) : '---';
+                        const end = meeting.end_time ? meeting.end_time.substring(0, 5) : '---';
+                        const creator = meeting.creator || '---';
+                        const members = !(meeting.members && meeting.members.length > 0) ? 'Только создатель' : meeting.members.map(m => `
+                            <p>${m.email} (${m.full_name})</p>
+                        `).join('');
+                        const rowStyle = meeting.is_past ? 'style="background-color: #ffcccc;"' : '';
+
+                        meetingsBody.insertAdjacentHTML('beforeend', `
+                            <tr ${rowStyle}>
+                                <td>${meeting.topic}</td>
+                                <td>${date}</td>
+                                <td>${start}</td>
+                                <td>${end}</td>
+                                <td>${creator}</td>
+                                <td>${members}</td>
+                            </tr>
+                        `);
+                    });
+                } else {
+                    meetingsBody.innerHTML = '<tr><td colspan="7">Нет встреч в периоде</td></tr>';
+                }
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('error').textContent = 'Сетевая ошибка при загрузке календаря';
+                document.getElementById('result-info').textContent = '';
+            }
+        });
+    </script>
+{% endblock %}
