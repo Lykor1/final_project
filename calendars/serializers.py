@@ -7,6 +7,7 @@ from meetings.models import Meeting
 
 User = get_user_model()
 
+
 class CalendarSerializer(serializers.ModelSerializer):
     type = serializers.SerializerMethodField()
     is_past = serializers.SerializerMethodField()
@@ -46,7 +47,9 @@ class CalendarTaskSerializer(CalendarSerializer):
         return f'{obj.created_by.email} ({obj.created_by.first_name} {obj.created_by.last_name})'
 
     def get_assigned_to(self, obj):
-        return f'{obj.assigned_to.email} ({obj.assigned_to.first_name} {obj.assigned_to.last_name})'
+        if obj.assigned_to:
+            return f'{obj.assigned_to.email} ({obj.assigned_to.first_name} {obj.assigned_to.last_name})'
+        return None
 
 
 class MembersSerializer(serializers.ModelSerializer):
@@ -59,6 +62,7 @@ class MembersSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return f'{obj.first_name.strip()} {obj.last_name.strip()}'
+
 
 class CalendarMeetingSerializer(CalendarSerializer):
     creator = serializers.SerializerMethodField()
