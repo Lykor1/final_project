@@ -26,7 +26,7 @@ services:
     ports:
       - "6379:6379"
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -59,6 +59,18 @@ services:
       - db
     restart: always
 
+  celery_beat:
+    build: .
+    container_name: fpd_celery_beat
+    command: celery -A final_project beat -l INFO
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+    restart: always
 
 volumes:
   postgres_data:

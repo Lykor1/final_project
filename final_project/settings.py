@@ -165,6 +165,11 @@ CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60
 CELERY_LOG_LEVEL = 'INFO'
 
+# Celery Beat
+CELERY_BEAT_SCHEDULE = {
+
+}
+
 # Email
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')

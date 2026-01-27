@@ -32,6 +32,9 @@ class Task(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='team_tasks', verbose_name='Команда')
     created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Создано')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлено')
+    reminder_7days_sent = models.BooleanField(default=False, verbose_name='Напоминание за 7 дней отправлено')
+    reminder_1day_sent = models.BooleanField(default=False, verbose_name='Напоминание за 1 день отправлено')
+    overdue_reminder_last_sent = models.BooleanField(null=True, blank=True, verbose_name='Дата последнего напоминания о проcрочке')
 
     class Meta:
         verbose_name = 'Задача'

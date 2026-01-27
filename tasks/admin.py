@@ -5,7 +5,8 @@ from .models import Task, Comment
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ('title', 'deadline', 'status', 'team', 'created_by', 'assigned_to')
+    list_display = ('title', 'deadline', 'status', 'team', 'created_by', 'assigned_to', 'reminder_7days_sent',
+                    'reminder_1day_sent', 'overdue_reminder_last_sent')
     list_editable = ('status',)
     search_fields = ('title', 'assigned_to', 'created_by')
 
