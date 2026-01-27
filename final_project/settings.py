@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from celery.schedules import crontab
 from dotenv import load_dotenv
 from datetime import timedelta
 import os
@@ -167,7 +168,10 @@ CELERY_LOG_LEVEL = 'INFO'
 
 # Celery Beat
 CELERY_BEAT_SCHEDULE = {
-
+    'send-deadline-reminders-every-6h': {
+        'task': 'tasks.tasks.send_deadline_reminders',
+        'schedule': crontab(hour='*/6'),
+    }
 }
 
 # Email

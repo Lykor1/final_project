@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="task",
             name="overdue_reminder_last_sent",
-            field=models.BooleanField(
+            field=models.DateField(
                 blank=True,
                 null=True,
                 verbose_name="Дата последнего напоминания о проcрочке",

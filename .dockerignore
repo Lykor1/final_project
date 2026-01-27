@@ -15,3 +15,5 @@ Thumbs.db
 */migrations/__pycache__/
 migrations/
 .pytest_cache/
+celerybeat-schedule
+celerybeat-schedule-*

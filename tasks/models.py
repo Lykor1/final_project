@@ -34,7 +34,8 @@ class Task(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлено')
     reminder_7days_sent = models.BooleanField(default=False, verbose_name='Напоминание за 7 дней отправлено')
     reminder_1day_sent = models.BooleanField(default=False, verbose_name='Напоминание за 1 день отправлено')
-    overdue_reminder_last_sent = models.BooleanField(null=True, blank=True, verbose_name='Дата последнего напоминания о проcрочке')
+    overdue_reminder_last_sent = models.DateField(null=True, blank=True,
+                                                  verbose_name='Дата последнего напоминания о проcрочке')
 
     class Meta:
         verbose_name = 'Задача'
