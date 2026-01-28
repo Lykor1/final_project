@@ -78,6 +78,13 @@ class MeetingService:
             meeting.start_time = start_time
         if meeting.end_time is not None:
             meeting.end_time = end_time
+        changed_time = (
+                (date is not None and date != meeting.date) or
+                (start_time is not None and start_time != meeting.start_time) or
+                (end_time is not None and end_time != meeting.end_time)
+        )
+        if changed_time:
+            meeting.reminder_1hour_sent = False
         meeting.save()
         meeting.members.set(members)
         return meeting

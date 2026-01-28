@@ -19,6 +19,7 @@ class Meeting(models.Model):
     creator = models.ForeignKey(User, on_delete=models.CASCADE, db_index=True, related_name='meetings',
                                 verbose_name='Создатель встречи')
     members = models.ManyToManyField(User, related_name='meeting_members', verbose_name='Участники встречи')
+    reminder_1hour_sent = models.BooleanField(default=False, verbose_name='Напоминание за час отправлено')
 
     class Meta:
         verbose_name = 'Встреча'

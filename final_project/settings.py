@@ -171,7 +171,11 @@ CELERY_BEAT_SCHEDULE = {
     'send-deadline-reminders-every-6h': {
         'task': 'tasks.tasks.send_deadline_reminders',
         'schedule': crontab(hour='*/6'),
-    }
+    },
+    'send-meeting-reminders-every-10-min': {
+        'task': 'tasks.tasks.send_meeting_reminders',
+        'schedule': 10 * 60,
+    },
 }
 
 # Email

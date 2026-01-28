@@ -71,7 +71,6 @@ def send_deadline_reminders():
         status__in=[Task.Status.OPEN, Task.Status.IN_PROGRESS],
         assigned_to__isnull=False,
     ).select_related('assigned_to', 'team', 'created_by')
-    logger.info(qs)
     notifications = defaultdict(list)
     for task in qs.iterator():
         deadline = task.deadline
